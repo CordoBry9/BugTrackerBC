@@ -1,0 +1,86 @@
+﻿@page "/edit-project/{projectId:int}"
+@using BugTrackerBC.Client.Services.Interfaces
+@using Microsoft.AspNetCore.Authorization
+@inject IProjectDTOService ProjectDTOService
+@inject NavigationManager Navigation
+@attribute [Authorize]
+@rendermode InteractiveAuto
+
+<PageTitle>Edit Project</PageTitle>
+
+@if (project == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <EditForm Model="project" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label for="name" class="form-label">Name</label>
+            <InputText id="name" class="form-control" @bind-Value="project.Name" />
+        </div>
+
+        <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <InputTextArea id="description" class="form-control" @bind-Value="project.Description" />
+        </div>
+
+        <div class="mb-3">
+            <label for="priority" class="form-label">Priority</label>
+            <InputSelect id="priority" class="form-control" @bind-Value="project.Priority">
+                @foreach (ProjectPriority priority in Enum.GetValues(typeof(ProjectPriority)))
+                {
+                    <option value="@priority">@priority.GetDisplayName()</option>
+                }
+            </InputSelect>
+        </div>
+
+        <div class="mb-3">
+            <label for="startDate" class="form-label">Start Date</label>
+            <InputDate id="startDate" class="form-control" @bind-Value="project.StartDate" />
+        </div>
+
+        <div class="mb-3">
+            <label for="endDate" class="form-label">End Date</label>
+            <InputDate id="endDate" class="form-control" @bind-Value="project.EndDate" />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save</button>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public int projectId { get; set; }
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+
+    private ProjectDTO? project;
+    private UserInfo? userInfo;
+    protected override async Task OnInitializedAsync()
+    {
+        userInfo = await UserInfoHelper.GetUserInfoAsync(AuthStateTask);
+        project = await ProjectDTOService.GetProjectByIdAsync(projectId, userInfo!.CompanyId);
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            if(project != null)
+            {
+                await ProjectDTOService.UpdateProjectAsync(project, userInfo!.CompanyId);
+                Navigation.NavigateTo("/projects");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
+    }
+}

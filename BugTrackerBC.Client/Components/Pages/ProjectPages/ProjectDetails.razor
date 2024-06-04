@@ -1,0 +1,69 @@
+﻿@page "/details-project/{projectId:int}"
+@using BugTrackerBC.Client.Components.UI.ProjectsUI
+@using BugTrackerBC.Client.Models
+@using BugTrackerBC.Client.Services.Interfaces
+@inject IProjectDTOService ProjectDTOService
+@inject NavigationManager Nav
+@rendermode InteractiveAuto
+@if (project != null)
+{
+    <div class="card w-50">
+        <div class="card-header">
+            <h4>@project.Name</h4>
+        </div>
+        <div class="card-body">
+            <p class="card-text">Assigned: @project.StartDate.ToString("d") Deadline: @project.EndDate.ToString("d")</p>
+            <hr />
+            <p class="card-text">Priority: @project.Priority</p>
+            <hr />
+            <p class="card-text">@project.Description</p>
+            <hr />
+            <a href="/projects" class="btn btn-primary">Back to Projects</a>
+        </div>
+    </div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">Project</th>
+                <th scope="col">Developer</th>
+                <th scope="col">Created</th>
+                <th scope="col">Description</th>
+
+            </tr>
+        </thead>
+        @foreach (TicketDTO ticket in project.Tickets)
+        {
+
+            <tbody>
+                <tr>
+                    <td>@ticket.Project</td>
+                    <td>@ticket.DeveloperUser</td>
+                    <td>@ticket.Created.ToString("g")</td>
+                    <td>@ticket.Description</td>
+                </tr>
+            </tbody>
+
+        }
+    </table>
+}
+
+@code {
+
+    [Parameter]
+    public int projectId { get; set; }
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    private ProjectDTO? project;
+    private UserInfo? userInfo;
+    private TicketDTO? ticket;
+    private UserDTO? member;
+
+    protected override async Task OnInitializedAsync()
+    {
+        userInfo = await UserInfoHelper.GetUserInfoAsync(AuthStateTask);
+        project = await ProjectDTOService.GetProjectByIdAsync(projectId, userInfo!.CompanyId);
+    }
+
+}

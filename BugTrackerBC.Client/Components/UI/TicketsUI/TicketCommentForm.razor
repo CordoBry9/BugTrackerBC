@@ -1,0 +1,68 @@
+﻿@using BugTrackerBC.Client.Services.Interfaces
+@inject ITicketDTOService TicketDTOService
+
+<EditForm Model="Comment" OnValidSubmit="HandleSubmit" class="row">
+    <DataAnnotationsValidator></DataAnnotationsValidator>
+    <div class="col-12 d-flex flex-column">
+        <div class="mb-2 flex-fill vstack">
+            <label class="form-label mt-2"><h4>Write a Comment:</h4></label>
+            <InputTextArea @bind-Value="Comment!.Content"></InputTextArea>
+            <ValidationMessage For="() => Comment!.Content"></ValidationMessage>
+        </div>
+        <div class="row d-flex">
+            <div class="col-12 text-end mb-4"><button type="submit" class="btn btn-primary">Save</button></div>
+        </div>
+    </div>
+    <ValidationSummary></ValidationSummary>
+</EditForm>
+
+@code {
+
+    [Parameter]
+
+    public TicketCommentDTO? Comment { get; set; }
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    [Parameter]
+
+    public List<TicketCommentDTO>? commentsList { get; set; }
+
+    [Parameter, EditorRequired]
+    public EventCallback<TicketCommentDTO> CreateTheComment { get; set; }
+
+    private IEnumerable<TicketCommentDTO> ticketComments = [];
+    private TicketCommentDTO newComment = new TicketCommentDTO();
+    private string? imageError;
+    private string? fileError;
+    private UserInfo? userInfo;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            userInfo = await UserInfoHelper.GetUserInfoAsync(AuthStateTask);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        try
+        {
+            
+            await CreateTheComment.InvokeAsync(Comment);
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
+    }
+
+
+}

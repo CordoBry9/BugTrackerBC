@@ -1,0 +1,99 @@
+﻿@page "/edit-ticket/{ticketId:int}"
+@using BugTrackerBC.Client.Services.Interfaces
+@using Microsoft.AspNetCore.Authorization
+@inject IProjectDTOService ProjectDTOService
+@inject ITicketDTOService TicketDTOService
+@inject NavigationManager Navigation
+@attribute [Authorize]
+@rendermode InteractiveAuto
+
+<PageTitle>Edit Project</PageTitle>
+
+@if (ticket == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <EditForm Model="ticket" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label for="name" class="form-label">Name</label>
+            <InputText id="name" class="form-control" @bind-Value="ticket.Title" />
+        </div>
+
+        <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <InputTextArea id="description" class="form-control" @bind-Value="ticket.Description" />
+        </div>
+
+        <div class="mb-3">
+            <label for="priority" class="form-label">Priority</label>
+            <InputSelect id="priority" class="form-control" @bind-Value="ticket.Priority">
+                @foreach (TicketPriority priority in Enum.GetValues(typeof(TicketPriority)))
+                {
+                    <option value="@priority">@priority.GetDisplayName()</option>
+                }
+            </InputSelect>
+        </div>
+
+        <div class="mb-3">
+            <label for="type" class="form-label">Type</label>
+            <InputSelect id="type" class="form-control" @bind-Value="ticket.Type">
+                    @foreach (TicketType type in Enum.GetValues(typeof(TicketType)))
+                    {
+                        <option value="@type">@type.GetDisplayName()</option>
+                    }
+            </InputSelect>
+        </div>
+
+        <div class="mb-3">
+            <label for="status" class="form-label">Type</label>
+            <InputSelect id="status" class="form-control" @bind-Value="ticket.Status">
+                @foreach (TicketStatus status in Enum.GetValues(typeof(TicketStatus)))
+                {
+                    <option value="@status">@status.GetDisplayName()</option>
+                }
+            </InputSelect>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save</button>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public int ticketId { get; set; }
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+
+    private List<ProjectDTO> projects = new List<ProjectDTO>();
+    private TicketDTO? ticket;
+    private UserInfo? userInfo;
+    protected override async Task OnInitializedAsync()
+    {
+        userInfo = await UserInfoHelper.GetUserInfoAsync(AuthStateTask);
+        projects = (await ProjectDTOService.GetAllProjectsAsync(userInfo!.CompanyId)).ToList();
+        ticket = await TicketDTOService.GetTicketByIdAsync(ticketId, userInfo!.CompanyId);
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            if (ticket != null)
+            {
+                await TicketDTOService.UpdateTicketAsync(ticket, userInfo!.CompanyId, userInfo!.UserId);
+                Navigation.NavigateTo("/tickets");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
+    }
+}

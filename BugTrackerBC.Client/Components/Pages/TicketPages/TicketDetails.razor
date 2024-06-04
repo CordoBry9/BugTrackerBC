@@ -1,0 +1,141 @@
+﻿@page "/details-ticket/{ticketId:int}"
+@using BugTrackerBC.Client.Components.UI.TicketsUI
+@using BugTrackerBC.Client.Models
+@using BugTrackerBC.Client.Services.Interfaces
+@inject ITicketDTOService TicketDTOService
+@inject IProjectDTOService ProjectDTOService
+@inject NavigationManager Nav
+@rendermode InteractiveAuto
+
+@if (ticket != null)
+{
+    <div class="row row-cols-2">
+        <div class="col">
+            <div class="card text-center p-2 mb-4">
+                <div class="card-header">
+                    <h4>Ticket: @ticket.Title</h4>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Created: @ticket.Created.ToString("g") Updated: @ticket.Updated?.ToString("g")</p>
+                    <hr />
+                    <p class="card-text">Priority: @ticket.Priority</p>
+                    <hr />
+                    <p class="card-text">Status: @ticket.Status</p>
+                    <hr />
+                    <p class="card-text">@ticket.Description</p>
+                    <hr />
+                    <p class="card-text">Project: @project?.Name</p>
+                    <hr/>
+                    <p class="card-text">Attachments:
+                        @{
+                        @foreach(TicketAttachmentDTO ticketAttachment in ticket.Attachments)
+                            {
+                                string? extension = Path.GetExtension(ticketAttachment.FileName)?.Trim('.') ?? "default";
+
+                                <img src="@($"png/{extension}.png")" />
+                            }
+                        }
+                    </p>
+                    <hr />
+                    <a href="/tickets" class="btn btn-primary">Back to Tickets</a>
+
+                </div>
+            </div>
+        </div>
+        <div class="col">
+
+            <TicketAttachments TicketId="ticketId" OnChange="HandleChange"></TicketAttachments>
+
+
+        </div>
+    </div>
+
+
+    <section class="container pt-xl-2">
+        <div>
+            <TicketCommentForm Comment="comment" CreateTheComment="HandleSubmit"></TicketCommentForm>
+        </div>
+    </section>
+
+    <h4 class="">Comments:</h4>
+    <hr />
+    @if (comments != null)
+    {
+        @foreach (TicketCommentDTO comment in comments.OrderByDescending(c => c.Created))
+        {
+            <TicketComments Comment="comment" userInfo="userInfo" DeleteTheComment="HandleDelete" UpdateTheComment="HandleUpdate"></TicketComments>
+        }
+    }
+}
+
+@code {
+    [Parameter]
+    public int ticketId { get; set; }
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    private IEnumerable<ProjectDTO>? projects;
+    private ProjectDTO? project;
+    private TicketDTO? ticket;
+    private UserInfo? userInfo;
+    private TicketCommentDTO comment = new TicketCommentDTO();
+    private IEnumerable<TicketCommentDTO>? comments;
+
+    protected override async Task OnInitializedAsync()
+    {
+        userInfo = await UserInfoHelper.GetUserInfoAsync(AuthStateTask);
+        ticket = await TicketDTOService.GetTicketByIdAsync(ticketId, userInfo!.CompanyId);
+        projects = await ProjectDTOService.GetAllProjectsAsync(userInfo!.CompanyId);
+        project = await ProjectDTOService.GetProjectByIdAsync(ticket!.ProjectId, userInfo!.CompanyId);
+        comments = await TicketDTOService.GetTicketCommentsAsync(ticketId, userInfo!.CompanyId);
+        comment = new TicketCommentDTO()
+            {
+                UserId = userInfo.UserId,
+                TicketId = ticketId
+            };
+    }
+
+    private async Task HandleSubmit()
+    {
+        try
+        {
+
+            await TicketDTOService.AddCommentAsync(comment, userInfo!.CompanyId);
+            comments = await TicketDTOService.GetTicketCommentsAsync(ticketId, userInfo!.CompanyId);
+            StateHasChanged();
+            comment = new TicketCommentDTO();
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
+    }
+
+    private async Task HandleDelete(int commentId)
+    {
+        await TicketDTOService.DeleteCommentAsync(commentId, userInfo!.CompanyId);
+        comments = await TicketDTOService.GetTicketCommentsAsync(ticketId, userInfo!.CompanyId);
+    }
+
+    private async Task HandleUpdate(TicketCommentDTO comment)
+    {
+        try
+        {
+            await TicketDTOService.UpdateCommentAsync(comment, userInfo!.UserId);
+            comments = await TicketDTOService.GetTicketCommentsAsync(ticketId, userInfo!.CompanyId);
+
+        }
+        catch (Exception ex)
+        {
+
+            Console.WriteLine(ex);
+        }
+    }
+
+    private async Task HandleChange()
+    {
+        ticket = await TicketDTOService.GetTicketByIdAsync(ticketId, userInfo!.CompanyId);
+    }
+}

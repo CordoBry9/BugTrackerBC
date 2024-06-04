@@ -1,0 +1,79 @@
+﻿@using BugTrackerBC.Client.Services.Interfaces
+@inject ITicketDTOService TicketService
+
+<EditForm Model="newAttachment" OnSubmit="HandleSubmit" class="vstack gap-1">
+    @* OnChange will store the selected file in the newFile field *@
+    <InputFile OnChange="e => newFile = e.File" />
+    <InputText @bind-Value="newAttachment.Description" class="form-control" placeholder="Description (optional)" />
+    <button type="submit" class="btn btn-primary">Upload</button>
+</EditForm>
+
+@code {
+    [Parameter, EditorRequired]
+    public int TicketId { get; set; }
+
+    [CascadingParameter]
+    public Task<AuthenticationState>? AuthStateTask { get; set; }
+    private UserInfo? userInfo;
+
+    private TicketAttachmentDTO newAttachment = new();
+    private IBrowserFile? newFile; // <- this is bound to the file input element
+
+    [Parameter]
+    public EventCallback OnChange { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // get the current user's information
+        userInfo = await UserInfoHelper.GetUserInfoAsync(AuthStateTask);
+
+        // fill out the fields we know about already
+        newAttachment.UserId = userInfo!.UserId;
+        newAttachment.TicketId = TicketId!;
+        newAttachment.Created = DateTime.Now;
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (newFile is not null)
+        {
+            // get the byte[] and ContentType from the selected file
+            using var stream = newFile.OpenReadStream();
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+
+            byte[] fileData = ms.ToArray();
+            string fileType = newFile.ContentType;
+            newAttachment.FileName = newFile.Name;
+
+            try
+            {
+                // send the model and file data to the service
+                await TicketService.AddTicketAttachment(newAttachment,
+                                                        fileData,
+                                                        fileType,
+                                                        userInfo!.CompanyId);
+            }
+            catch (Exception ex)
+            {
+                // TODO: display an error message if, e.g. file is too big
+                // or there was an error uploading the file
+                Console.WriteLine("Your file cannot be greater than 5mb, or there was an error in uploading your file.");
+                Console.WriteLine(ex);
+            }
+
+            // reset the form after this was successful
+            newFile = null;
+            newAttachment = new()
+            {
+                UserId = userInfo!.UserId,
+                TicketId = TicketId!,
+                Created = DateTime.Now
+            };
+
+            // this can be replaced with however you want to update the page
+            // after a file was saved
+            await OnChange.InvokeAsync();
+        }
+    }
+}

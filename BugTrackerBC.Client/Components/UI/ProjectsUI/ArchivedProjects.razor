@@ -1,0 +1,38 @@
+﻿<table class="table table-striped table-bordered mt-3">
+    <thead>
+        <tr>
+            <th>Created</th>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Priority</th>
+            <th>Archived</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (ProjectDTO project in archivedProjects.OrderByDescending(p => p.Created))
+        {
+            <tr>
+                <td>@project.Created.ToLocalTime().ToString("d")</td>
+                <td>@project.Name</td>
+                <td>@project.Description</td>
+                <td>@project.Priority</td>
+                <td>@project.Archived</td>
+                <td>@project.StartDate.ToLocalTime().ToString("d")</td>
+                <td>@project.EndDate.ToLocalTime().ToString("d")</td>
+                <td>
+                    <button class="btn btn-success" @onclick="() => OnRestore.InvokeAsync(project.Id)"><i class="bi bi-check"></i>Restore</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+@code {
+    [Parameter]
+    public IEnumerable<ProjectDTO> archivedProjects { get; set; } = new List<ProjectDTO>();
+
+    [Parameter]
+    public EventCallback<int> OnRestore { get; set; }
+}

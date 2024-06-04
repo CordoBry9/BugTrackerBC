@@ -1,0 +1,59 @@
+﻿@using BugTrackerBC.Client.Components.UI.ProjectsUI
+@using BugTrackerBC.Client.Models
+@using BugTrackerBC.Client.Services.Interfaces
+@inject ITicketDTOService TicketDTOService
+@inject NavigationManager Nav
+
+@if (Ticket != null)
+{
+    <tr>
+        <td>@Ticket.Id</td>
+        <td>@Ticket.Created.ToString("g")</td>
+        <td><a href="/details-Ticket/@Ticket.Id" class="text-decoration-none">@Ticket.Title</a></td>
+        <td>@Ticket.Description</td>
+        <td>@Ticket.Priority</td>
+        <td>
+            @if (Ticket.Archived == false)
+            {
+                <button class="btn btn-danger w-100 mb-2" @onclick="HandleArchive"><i class="bi bi-trash"></i> Archive</button>
+                <a class="btn btn-secondary w-100" href="/edit-Ticket/@Ticket.Id"><i class="bi bi-pencil"></i> Edit</a>
+            }
+            @if (Ticket.Archived == true)
+            {
+                <button class="btn btn-success w-100 mb-2" @onclick="HandleRestore"><i class="bi bi-check"></i> Restore</button>
+                <a class="btn btn-secondary w-100" href="/edit-Ticket/@Ticket.Id"><i class="bi bi-pencil"></i> Edit</a>
+            }
+        </td>
+        <td>@Ticket.Status</td>
+        <td>@Ticket.Type</td>
+    </tr>
+}
+
+@code {
+    [Parameter]
+    public TicketDTO? Ticket { get; set; }
+
+    [Parameter]
+    public EventCallback<int> OnRestore { get; set; }
+
+    [Parameter]
+    public EventCallback<int> OnArchive { get; set; }
+
+    private async Task HandleArchive()
+    {
+        if (Ticket != null)
+        {
+            await OnArchive.InvokeAsync(Ticket.Id);
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleRestore()
+    {
+        if (Ticket != null)
+        {
+            await OnRestore.InvokeAsync(Ticket.Id);
+            StateHasChanged();
+        }
+    }
+}

@@ -1,0 +1,32 @@
+﻿@page "/auth"
+
+@using Microsoft.AspNetCore.Authorization
+@using System.Security.Claims
+
+@attribute [Authorize]
+@rendermode InteractiveAuto
+
+<PageTitle>Auth</PageTitle>
+
+<h1>You are authenticated</h1>
+
+<AuthorizeView>
+    Hello @userInfo?.FirstName @userInfo?.LastName - @userInfo?.FullName - @userInfo?.Email
+</AuthorizeView>
+
+@code
+{
+    [CascadingParameter]
+
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    private UserInfo? userInfo;
+
+    protected override async Task OnInitializedAsync()
+    {
+        AuthenticationState authState = await AuthStateTask!;
+
+        userInfo = await UserInfoHelper.GetUserInfoAsync(AuthStateTask);
+
+    }
+}

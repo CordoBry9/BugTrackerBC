@@ -1,0 +1,83 @@
+﻿@using BugTrackerBC.Client.Services.Interfaces
+@using Microsoft.AspNetCore.Authorization
+@inject IProjectDTOService ProjectService
+@inject NavigationManager Navigation
+@attribute [Authorize]
+@rendermode InteractiveAuto
+
+
+@if (newTicket != null)
+{
+    <EditForm Model="newTicket" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label for="name" class="form-label">Name</label>
+            <InputText id="name" class="form-control" @bind-Value="newTicket.Title" />
+        </div>
+
+        <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <InputTextArea id="description" class="form-control" @bind-Value="newTicket.Description" />
+        </div>
+
+        <div class="mb-3">
+            <label for="priority" class="form-label">Priority</label>
+            <InputSelect id="priority" class="form-control" @bind-Value="newTicket.Priority">
+                @foreach (TicketPriority priority in Enum.GetValues(typeof(TicketPriority)))
+                {
+                    <option value="@priority">@priority.GetDisplayName()</option>
+                }
+            </InputSelect>
+        </div>
+        <div class="mb-3">
+            <label for="type" class="form-label">Type</label>
+            <InputSelect id="type" class="form-control" @bind-Value="newTicket.Type">
+                    @foreach (TicketType type in Enum.GetValues(typeof(TicketType)))
+                    {
+                        <option value="@type">@type.GetDisplayName()</option>
+                    }
+            </InputSelect>
+        </div>
+        <div class="mb-3">
+            <label for="project" class="form-label">Project</label>
+            <InputSelect id="project" class="form-control" @bind-Value="newTicket.ProjectId">
+                @if(projects != null)
+                {
+                    @foreach (ProjectDTO project in projects)
+                    {
+                        <option value="@project.Id">@project.Name</option>
+                    }
+                }
+            
+            </InputSelect>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Create</button>
+    </EditForm>
+}
+
+
+@code {
+    [Parameter]
+
+    public TicketDTO? newTicket { get; set; }
+
+    [Parameter]
+    public List<ProjectDTO>? projects { get; set; }
+
+    [Parameter]
+    public EventCallback<TicketDTO> OnSubmit { get; set; }
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    [Parameter]
+    public UserInfo? userInfo { get; set; }
+
+    private async Task HandleSubmit()
+    {
+        await OnSubmit.InvokeAsync(newTicket);
+    }
+}

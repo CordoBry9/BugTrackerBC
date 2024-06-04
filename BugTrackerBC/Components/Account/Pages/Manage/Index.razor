@@ -1,0 +1,129 @@
+﻿@page "/Account/Manage"
+
+@using System.ComponentModel.DataAnnotations
+@using BugTrackerBC.Client.Helpers
+@using BugTrackerBC.Helpers.Extensions
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using BugTrackerBC.Data
+@using BugTrackerBC.Helpers
+@using BugTrackerBC.Models
+
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+@inject IdentityUserAccessor UserAccessor
+@inject IdentityRedirectManager RedirectManager
+@inject ApplicationDbContext DBContext
+
+<PageTitle>Profile</PageTitle>
+
+<h3>Profile</h3>
+<StatusMessage />
+
+<div class="row">
+    <div class="col-md-6">
+        <EditForm Model="Input" FormName="profile" OnValidSubmit="OnValidSubmitAsync" method="post" enctype="multipart/form-data">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert" />
+            <div class="form-floating mb-3">
+                <input type="text" value="@username" class="form-control" placeholder="Please choose your username." disabled />
+                <label for="username" class="form-label">Username</label>
+            </div>
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.FirstName" class="form-control" placeholder="Please enter your first name." />
+                <label for="first-name" class="form-label">First Name</label>
+                <ValidationMessage For="() => Input.FirstName" class="text-danger" />
+            </div>
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.LastName" class="form-control" placeholder="Please enter your last name." />
+                <label for="last-name" class="form-label">Last Name</label>
+                <ValidationMessage For="() => Input.LastName" class="text-danger" />
+            </div>
+
+                <div class="col-md-6 order-first order-md-last">
+                    <img src="@(user?.ImageId.HasValue == true ? $"/api/uploads/{user.ImageId}" : FileHelper.DefaultProfilePicture)" class="img-fluid p-5 pt-0 rounded-3" id="imagePreview" />
+
+                    <label class="form-label" for="image">Profile Picture</label>
+                    <input type="file" class="form-control" accept=".jpg,.jpeg,.png,.svg,.gif" name="Input.ProfilePicture"
+                           onchange="document.getElementById('imagePreview').src = window.URL.createObjectURL(this.files[0])" />
+                </div>
+ 
+            <button type="submit" class="w-100 btn btn-lg btn-primary">Save</button>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    private ApplicationUser user = default!;
+    private string? username;
+    private string? firstName;
+    private string? lastName;
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        user = await UserAccessor.GetRequiredUserAsync(HttpContext);
+        username = await UserManager.GetUserNameAsync(user);
+        Input.FirstName = string.IsNullOrEmpty(Input.FirstName) ? user.FirstName : Input.FirstName;
+        Input.FirstName = string.IsNullOrEmpty(Input.LastName) ? user.LastName : Input.LastName;
+    }
+
+    private async Task OnValidSubmitAsync()
+    {
+        user.FirstName = Input.FirstName;
+        user.LastName = Input.LastName;
+
+        if(Input.ProfilePicture != null)
+        {
+            try
+            {
+                FileUpload newImage = await UploadHelper.GetFileUploadAsync(Input.ProfilePicture);
+                await DBContext.AddAsync(newImage);
+
+                FileUpload? oldImage = await DBContext.Files.FirstOrDefaultAsync(i => i.Id == user.ImageId);
+                if(oldImage != null)
+                {
+                    DBContext.Remove(oldImage);
+                }
+
+                user.Image = newImage;
+                user.ImageId = newImage.Id;
+
+                DBContext.Users.Update(user);
+
+                await DBContext.SaveChangesAsync();
+
+            }
+            catch (Exception)
+            {
+                RedirectManager.RedirectToCurrentPageWithStatus("The image could not be uploaded. Profile images must be 5MB or less.", HttpContext);
+                throw;
+            }
+        }
+
+        await UserManager.UpdateAsync(user);
+        await SignInManager.RefreshSignInAsync(user);
+        RedirectManager.RedirectToCurrentPageWithStatus("Your profile has been updated.", HttpContext);
+    }
+
+    private sealed class InputModel
+    {
+        [Required]
+        [Display(Name = "First Name")]
+        public string? FirstName { get; set; }
+
+        [Required]
+        [Display(Name = "Last Name")]
+        public string? LastName { get; set; }
+
+        [Display(Name = "Profile Picture")]
+        public IFormFile? ProfilePicture { get; set; }
+
+
+    }
+}

@@ -1,0 +1,45 @@
+﻿@using BugTrackerBC.Client.Components.UI.ProjectsUI
+@using BugTrackerBC.Client.Models
+@using BugTrackerBC.Client.Services.Interfaces
+@inject IProjectDTOService ProjectService
+@inject NavigationManager Nav
+
+@if (Project != null)
+{
+    <tr>
+        <td>@Project.Created.ToString("g")</td>
+        <td><a href="/details-project/@Project.Id" class="text-decoration-none">@Project.Name</a></td>
+        <td>@Project.Description</td>
+        <td>@Project.Priority</td>
+        <td>
+            @if (Project.Archived == false)
+            {
+                <button class="btn btn-danger w-100 mb-2" @onclick="HandleArchive"><i class="bi bi-trash"></i> Archive</button>
+                <a class="btn btn-secondary w-100" href="/edit-project/@Project.Id"><i class="bi bi-pencil"></i> Edit</a>
+            }
+        </td>
+        <td>@Project.StartDate.ToString("d")</td>
+        <td>@Project.EndDate.ToString("d")</td>
+    </tr>
+}
+
+@code {
+    [Parameter]
+    public ProjectDTO? Project { get; set; }
+
+    [Parameter]
+    public EventCallback<int> OnRestore { get; set; }
+
+    [Parameter]
+    public EventCallback<int> OnArchive { get; set; }
+
+    private async Task HandleArchive()
+    {
+        if (Project != null)
+        {
+            await OnArchive.InvokeAsync(Project.Id);
+            StateHasChanged();
+        }
+    }
+
+}

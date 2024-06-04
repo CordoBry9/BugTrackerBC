@@ -1,0 +1,127 @@
+﻿@using BugTrackerBC.Client.Services.Interfaces
+@inject ITicketDTOService TicketDTOService
+
+@if (Comment != null)
+{
+    @if (currentState == CommentState.Viewing)
+    {
+        <div class="border-bottom pt-2 pb-4 mt-2">
+            <div class="d-flex align-items-center pb-1 mb-3">
+                <img class="rounded-circle" src="@Comment.User?.ImageUrl" width="40px" height="40px" alt="Comment author image">
+                <div class="ps-3">
+                    <h6 class="mb-0">@Comment.User?.FullName</h6>
+                    <span class="fs-sm text-body-secondary">@Comment.Created.ToString("yyyy-MM-dd HH:mm")</span>
+                </div>
+            </div>
+            <p class="pb-2 mb-0">@((MarkupString)Comment.Content!)</p>
+
+            <AuthorizeView>
+
+                    @if (Comment.UserId == userInfo!.UserId)
+                    {
+                        <div class="d-flex align-items-between">
+                            <button class="nav-link fs-sm fw-semibold px-0 py-2" @onclick="() => ChangeState(CommentState.Deleting)">
+                                <i class="bi bi-trash text-danger fs-xl ms-2"></i>
+                            </button>
+                            <button class="nav-link fs-sm fw-semibold px-0 py-2" @onclick="() => ChangeState(CommentState.Editing)">
+                                <i class="bi bi-pencil text-success fs-xl ms-2"></i>
+                            </button>
+                        </div>
+                    }
+
+            </AuthorizeView>
+        </div>
+    }
+
+    @if (currentState == CommentState.Deleting)
+    {
+        <div class="pb-4 pt-2 border-bottom">
+            <div class="text-danger mt-1">Are you sure you want to delete the comment?</div>
+            <button class="btn btn-sm btn-danger mt-2" @onclick="() => HandleDelete(Comment.Id)">Delete</button>
+            <button class="btn btn-sm btn-secondary mt-2" @onclick="() => ChangeState(CommentState.Viewing)">Cancel</button>
+        </div>
+    }
+    @if (currentState == CommentState.Editing)
+    {
+        <div class="pb-4 pt-2 border-bottom">
+            <EditForm Model="Comment" OnSubmit="HandleUpdate" class="row">
+                <DataAnnotationsValidator></DataAnnotationsValidator>
+                <div class="col-12 d-flex flex-column">
+                    <div class="mb-2 flex-fill vstack">
+                        <label class="form-label mt-2"><h4>Edit your comment</h4></label>
+                        <InputTextArea @bind-Value="Comment.Content"/>
+                        <ValidationMessage For="() => Comment.Content"></ValidationMessage>
+                    </div>
+
+                </div>
+                <div class="d-flex flex-grow flex-grow-0 justify-content-end g-3">
+                    <div class="me-2"><button type="button" class="btn btn-danger " @onclick="() => ChangeState(CommentState.Viewing)">Cancel</button></div>
+                    <div> <button type="submit" class="btn btn-primary">Edit</button></div>
+                </div>
+            </EditForm>
+        </div>
+    }
+}
+
+@code {
+
+    private CommentState currentState = CommentState.Viewing;
+    public enum CommentState
+    {
+        Viewing,
+        Deleting,
+        Editing
+    }
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    [Parameter, EditorRequired]
+    public EventCallback<TicketCommentDTO> UpdateTheComment { get; set; }
+
+    [Parameter, EditorRequired]
+    public EventCallback<int> DeleteTheComment { get; set; }
+
+    [Parameter]
+    public TicketCommentDTO? Comment { get; set; }
+
+    [Parameter]
+    public UserInfo? userInfo { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        userInfo = await UserInfoHelper.GetUserInfoAsync(AuthStateTask);
+    }
+
+    private void ChangeState(CommentState state)
+    {
+        currentState = state;
+    }
+
+    private async Task HandleDelete(int commentId)
+    {
+        try
+        {
+            await DeleteTheComment.InvokeAsync(commentId);
+            ChangeState(CommentState.Viewing);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
+    }
+
+    private async Task HandleUpdate()
+    {
+        try
+        {
+            await UpdateTheComment.InvokeAsync(Comment);
+            ChangeState(CommentState.Viewing);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
+    }
+
+}
