@@ -49,13 +49,16 @@ namespace BugTrackerBC.Services
         {
             using ApplicationDbContext context = _dbContextFactory.CreateDbContext();
 
-            Ticket? ticket = await context.Tickets.Include(t => t.SubmitterUser)
-                                       .Include(t => t.DeveloperUser)
-                                       .Include(t => t.Attachments)
-                                       .ThenInclude(a => a.FileUpload)
-                                       .Include(t => t.Comments)
-                                       .Include(t => t.Project)
-                                       .FirstOrDefaultAsync(t => t.Id == ticketId && t.Project!.CompanyId == companyId);
+            Ticket? ticket = await context.Tickets
+                .Include(t => t.SubmitterUser)
+                .Include(t => t.DeveloperUser)
+                .Include(t => t.Comments)
+                .Include(t => t.Project)
+                .Include(t => t.Attachments)
+                    .ThenInclude(a => a.FileUpload)
+                .Include(t => t.Attachments)
+                    .ThenInclude(a => a.User) 
+                .FirstOrDefaultAsync(t => t.Id == ticketId && t.Project!.CompanyId == companyId);
 
             return ticket;
         }

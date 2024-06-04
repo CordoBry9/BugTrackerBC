@@ -53,6 +53,8 @@ builder.Services.AddScoped<IProjectDTOService, ProjectDTOService>();
 builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
 builder.Services.AddScoped<ITicketDTOService, TicketDTOService>();
 builder.Services.AddScoped<ITicketRepository, TicketRepository>();
+builder.Services.AddScoped<ICompanyDTOService, CompanyDTOService>();
+builder.Services.AddScoped<ICompanyRepository, CompanyRepository>();
 
 var app = builder.Build();
 

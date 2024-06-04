@@ -9,7 +9,7 @@
 
 @if (ticket != null)
 {
-    <div class="row row-cols-2">
+    <div class="row row-cols-1 row-cols-md-2 g-4">
         <div class="col">
             <div class="card text-center p-2 mb-4">
                 <div class="card-header">
@@ -25,47 +25,69 @@
                     <p class="card-text">@ticket.Description</p>
                     <hr />
                     <p class="card-text">Project: @project?.Name</p>
-                    <hr/>
-                    <p class="card-text">Attachments:
-                        @{
-                        @foreach(TicketAttachmentDTO ticketAttachment in ticket.Attachments)
-                            {
-                                string? extension = Path.GetExtension(ticketAttachment.FileName)?.Trim('.') ?? "default";
-
-                                <img src="@($"png/{extension}.png")" />
-                            }
-                        }
-                    </p>
                     <hr />
                     <a href="/tickets" class="btn btn-primary">Back to Tickets</a>
+                </div>
+            </div>
 
+            <section class="container pt-xl-2">
+                <div>
+                    <TicketCommentForm Comment="comment" CreateTheComment="HandleSubmit"></TicketCommentForm>
+                </div>
+            </section>
+
+            <h4 class="">Comments:</h4>
+            <hr />
+            @if (comments != null)
+            {
+                @foreach (TicketCommentDTO comment in comments.OrderByDescending(c => c.Created))
+                {
+                    <TicketComments Comment="comment" userInfo="userInfo" DeleteTheComment="HandleDelete" UpdateTheComment="HandleUpdate"></TicketComments>
+                }
+            }
+        </div>
+
+        <div class="col">
+            <div class="border rounded p-3">
+                <TicketAttachments TicketId="ticketId" OnChange="HandleChange"></TicketAttachments>
+                <hr />
+                <h4 class="text-center">Attachments: </h4>
+                <div class="row row-cols-1 row-cols-md-2 g-4">
+                    @foreach (TicketAttachmentDTO ticketAttachment in ticket.Attachments)
+                    {
+                        string? extension = Path.GetExtension(ticketAttachment.FileName)?.Trim('.') ?? "default";
+                        <div class="col">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title">@ticketAttachment.FileName</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text"><b>Description:</b> @ticketAttachment.Description</p>
+                                    <p class="card-text"><b>Upload Date:</b> @ticketAttachment.Created.ToString("d")</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <a href="@ticketAttachment.AttachmentUrl" target="_blank" class="btn btn-success">
+                                            <img src="@($"png/{extension}.png")" alt="@extension" style="width:50px; height:50px;" />
+                                            <p class="mb-0 mt-2"><b>Download</b></p>
+                                        </a>
+                                        <button class="btn btn-danger" @onclick="() => DeleteAttachment(ticketAttachment.Id)">
+                                            <i class="bi bi-trash"></i>
+                                            Delete
+                                        </button>
+                                    </div>
+                                </div>
+                                @if (ticketAttachment.User is not null)
+                                {
+                                    <div class="card-footer">
+                                        <p class="card-text"><b>Uploaded by:</b> @ticketAttachment.User.FullName</p>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
                 </div>
             </div>
         </div>
-        <div class="col">
-
-            <TicketAttachments TicketId="ticketId" OnChange="HandleChange"></TicketAttachments>
-
-
-        </div>
     </div>
-
-
-    <section class="container pt-xl-2">
-        <div>
-            <TicketCommentForm Comment="comment" CreateTheComment="HandleSubmit"></TicketCommentForm>
-        </div>
-    </section>
-
-    <h4 class="">Comments:</h4>
-    <hr />
-    @if (comments != null)
-    {
-        @foreach (TicketCommentDTO comment in comments.OrderByDescending(c => c.Created))
-        {
-            <TicketComments Comment="comment" userInfo="userInfo" DeleteTheComment="HandleDelete" UpdateTheComment="HandleUpdate"></TicketComments>
-        }
-    }
 }
 
 @code {
@@ -100,12 +122,10 @@
     {
         try
         {
-
             await TicketDTOService.AddCommentAsync(comment, userInfo!.CompanyId);
             comments = await TicketDTOService.GetTicketCommentsAsync(ticketId, userInfo!.CompanyId);
             StateHasChanged();
             comment = new TicketCommentDTO();
-
         }
         catch (Exception ex)
         {
@@ -125,11 +145,9 @@
         {
             await TicketDTOService.UpdateCommentAsync(comment, userInfo!.UserId);
             comments = await TicketDTOService.GetTicketCommentsAsync(ticketId, userInfo!.CompanyId);
-
         }
         catch (Exception ex)
         {
-
             Console.WriteLine(ex);
         }
     }
@@ -137,5 +155,19 @@
     private async Task HandleChange()
     {
         ticket = await TicketDTOService.GetTicketByIdAsync(ticketId, userInfo!.CompanyId);
+    }
+
+    private async Task DeleteAttachment(int attachmentId)
+    {
+        try
+        {
+            await TicketDTOService.DeleteTicketAttachment(attachmentId, userInfo!.CompanyId);
+            ticket = await TicketDTOService.GetTicketByIdAsync(ticketId, userInfo!.CompanyId);
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
     }
 }

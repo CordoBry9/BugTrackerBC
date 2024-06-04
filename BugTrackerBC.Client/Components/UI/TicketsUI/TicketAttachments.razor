@@ -1,7 +1,7 @@
 ﻿@using BugTrackerBC.Client.Services.Interfaces
 @inject ITicketDTOService TicketService
 
-<EditForm Model="newAttachment" OnSubmit="HandleSubmit" class="vstack gap-1">
+<EditForm Model="newAttachment" OnSubmit="HandleSubmit" class="vstack p-3 gap-3">
     @* OnChange will store the selected file in the newFile field *@
     <InputFile OnChange="e => newFile = e.File" />
     <InputText @bind-Value="newAttachment.Description" class="form-control" placeholder="Description (optional)" />
