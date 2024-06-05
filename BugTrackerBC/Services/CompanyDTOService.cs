@@ -47,14 +47,6 @@ namespace BugTrackerBC.Services
             return company?.ToDTO();
         }
 
-        public Task AdduserToRoleAsync(string userId, string roleName, string adminId)
-        {
-            throw new NotImplementedException();
-        }
-
-
-
-
         public async Task<IEnumerable<UserDTO>> GetUsersInRoleAsync(string roleName, int companyId)
         {
 
@@ -77,6 +69,13 @@ namespace BugTrackerBC.Services
         public Task UpdateCompanyAsync(CompanyDTO company, string adminId)
         {
             throw new NotImplementedException();
+        }
+
+        public async Task UpdateUserRoleAsync(UserDTO user, string adminId)
+        {
+            if (string.IsNullOrEmpty(user.Role)) return;
+
+            await _repository.AddUserToRoleAsync(user.Id!, user.Role, adminId);
         }
     }
 }

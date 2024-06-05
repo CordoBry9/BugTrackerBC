@@ -3,49 +3,76 @@
 @using BugTrackerBC.Client.Services.Interfaces
 @inject ICompanyDTOService CompanyDTOService
 @inject NavigationManager Nav
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@using System.ComponentModel.DataAnnotations
 @rendermode InteractiveServer
+
 @if (company != null)
 {
     <div>
         <strong>@company.Name</strong>
     </div>
     <ul>
-        Employees
+        <li>Employees</li>
         @if (companymembers != null)
         {
             @foreach (UserDTO member in companymembers)
             {
-                <li>
-                    Name: @member.FullName Role: @member.Role
-                </li>
+                @if(member.Id != userInfo!.UserId)
+                {
+                    <li>
+                        Name: @member.FullName Role: @member.Role
+                        <AuthorizeView Roles="Admin" Context="authContext">
+                            <div class="dropdown">
+                                <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Select A Role
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <EditForm Model="member" OnValidSubmit="() => HandleUpdate(member)">
+                                        <DataAnnotationsValidator></DataAnnotationsValidator>
+                                        <InputSelect class="form-control" @bind-Value="member.Role">
+                                            @foreach (Roles role in Enum.GetValues(typeof(Roles)))
+                                            {
+                                                @if (role != Roles.DemoUser)
+                                                {
+                                                    <option value="@role">@role.GetDisplayName()</option>
+                                                }
+                                            }
+                                        </InputSelect>
+                                        <button type="submit" class="btn btn-primary">Update Role</button>
+                                    </EditForm>
+                                </ul>
+                            </div>
+                        </AuthorizeView>
+                    </li>
+                }
             }
         }
-
     </ul>
 }
 
 @code {
-
-    [Parameter]
-    public CompanyDTO? CompanyId { get; set; }
+    private CompanyDTO? company;
+    private IEnumerable<UserDTO>? companymembers;
+    private UserInfo? userInfo;
 
     [CascadingParameter]
     private Task<AuthenticationState>? AuthStateTask { get; set; }
-
-    private CompanyDTO? company;
-    private ProjectDTO? project;
-    private UserInfo? userInfo;
-    private TicketDTO? ticket;
-    private UserDTO? member;
-    private string? role;
-    private IEnumerable<UserDTO>? companymembers;
 
     protected override async Task OnInitializedAsync()
     {
         userInfo = await UserInfoHelper.GetUserInfoAsync(AuthStateTask);
         company = await CompanyDTOService.GetCompanyByIdAsync(userInfo!.CompanyId);
-        companymembers = await CompanyDTOService.GetCompanyMembersAsync(userInfo!.CompanyId);
-        role = await CompanyDTOService.GetUserRoleAsync(userInfo!.UserId, userInfo.CompanyId);
+        companymembers = await CompanyDTOService.GetCompanyMembersAsync(userInfo.CompanyId);
     }
 
+    private async Task HandleUpdate(UserDTO member)
+    {
+        if (userInfo != null)
+        {
+            await CompanyDTOService.UpdateUserRoleAsync(member, userInfo.UserId);
+            companymembers = await CompanyDTOService.GetCompanyMembersAsync(userInfo.CompanyId);
+        }
+    }
 }

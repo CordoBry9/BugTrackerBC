@@ -9,9 +9,47 @@ namespace BugTrackerBC.Services
     public class CompanyRepository(IDbContextFactory<ApplicationDbContext> contextFactory, IServiceProvider svcProvider) : ICompanyRepository
     {
 
-        public Task AddUserToRoleAsync(string userId, string roleName, string adminId)
+        public async Task AddUserToRoleAsync(string userId, string roleName, string adminId)
         {
-            throw new NotImplementedException();
+            //nobody can change their own roles, so dont let them
+            if (userId == adminId) return;
+
+            using IServiceScope scope = svcProvider.CreateScope();
+            UserManager<ApplicationUser> userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+            //get the user trying to change someone's role
+            ApplicationUser? admin = await userManager.FindByIdAsync(adminId);
+
+            //verify theyre admin
+
+            if ( admin is not null && await userManager.IsInRoleAsync(admin, nameof(Roles.Admin)))
+            {
+                //get the user that theyre trying to change
+                ApplicationUser? user = await userManager.FindByIdAsync(userId);
+
+                //verify they belong to same company
+                if(user is not null && user.CompanyId == admin.CompanyId)
+                {
+                    IList<string> currentRoles = await userManager.GetRolesAsync(user);
+                    string? currentRole = currentRoles.FirstOrDefault(r => r != nameof(Roles.DemoUser));
+
+                    //if user is already in role dont do anything
+                    if (string.Equals(currentRole, roleName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return;
+                    }
+
+                    //users should only have one role at a time, so remove their current role
+                    if (!string.IsNullOrEmpty(currentRole))
+                    {
+                        await userManager.RemoveFromRoleAsync(user, currentRole);
+                    }
+
+                    //add  the new role
+
+                    await userManager.AddToRoleAsync(user, roleName);
+                }
+            }
         }
 
         public async Task<Company?> GetCompanyByIdAsync(int companyId)
