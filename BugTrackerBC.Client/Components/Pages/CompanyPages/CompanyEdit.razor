@@ -1,0 +1,110 @@
+﻿@page "/company-edit/{companyId:int}"
+@using BugTrackerBC.Client.Helpers
+@using BugTrackerBC.Client.Services.Interfaces
+@using Microsoft.AspNetCore.Authorization
+@inject ICompanyDTOService CompanyDTOService
+@inject NavigationManager Nav
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+@if (company == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <EditForm Model="company" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator>
+        </DataAnnotationsValidator>
+
+        <div class="d-flex justify-content-center align-items-center">
+            <div class="card p-4" style="box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;">
+                <div class="row p-2 g-3">
+                    <div class="col-12 text-center">
+                        <h2>Update Company</h2>
+                    </div>
+                    <div class="row g-4">
+                        <div class="col-12 col-lg-5 text-center px-5">
+                            <img src="@(string.IsNullOrEmpty(company.ImageUrl) ? FileHelper.DefaultCompanyPicture : company.ImageUrl)" class="img-fluid" />
+                            <InputFile OnChange="OnFileChange" class="form-control mt-2" accept=".png, .jpg, .jpeg, .svg" />
+
+                            <div>
+                                <span class="text-danger">
+                                    @imageError
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-7">
+                            <div class="row g-2 py-2">
+                                <div class="col-12">
+                                    <label for="companyName" class="form-label lead">Company Name</label>
+                                    <InputText @bind-Value="company.Name" id="companyName" aria-label="Company Name" class="form-control lead" placeholder="Company Name" />
+                                    <ValidationMessage For="() => company.Name" />
+                                </div>
+                                <div class="col-12">
+                                    <label for="companyDescription" class="form-label lead">Company Description</label>
+                                    <InputTextArea @bind-Value="company.Description" id="companyDescription" aria-label="company description" class="form-control lead" placeholder="Company Description" />
+                                    <ValidationMessage For="() => company.Description" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public int CompanyId { get; set; }
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+    private string? imageError;
+    private CompanyDTO? company;
+    private UserInfo? userInfo;
+
+    protected override async Task OnInitializedAsync()
+    {
+        userInfo = await UserInfoHelper.GetUserInfoAsync(AuthStateTask);
+        company = await CompanyDTOService.GetCompanyByIdAsync(userInfo!.CompanyId);
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (company != null)
+        {
+            await CompanyDTOService.UpdateCompanyAsync(company, userInfo!.UserId);
+            Nav.NavigateTo("/company");
+        }
+    }
+
+    private async Task OnFileChange(InputFileChangeEventArgs changeEvent)
+    {
+        if (changeEvent.File is null)
+        {
+            company!.ImageUrl = FileHelper.DefaultCompanyPicture;
+        }
+        else if (changeEvent.File.Size > FileHelper.MaxFileSize)
+        {
+            imageError = "Images must be less than 5MB";
+        }
+        else
+        {
+            try
+            {
+                company!.ImageUrl = await FileHelper.GetDataUrl(changeEvent.File);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                imageError = "Could not read the selected file. Please select a different image.";
+            }
+        }
+    }
+}
+

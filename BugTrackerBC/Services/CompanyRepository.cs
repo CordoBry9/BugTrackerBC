@@ -2,7 +2,9 @@
 using BugTrackerBC.Models;
 using BugTrackerBC.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 
 namespace BugTrackerBC.Services
 {
@@ -22,13 +24,13 @@ namespace BugTrackerBC.Services
 
             //verify theyre admin
 
-            if ( admin is not null && await userManager.IsInRoleAsync(admin, nameof(Roles.Admin)))
+            if (admin is not null && await userManager.IsInRoleAsync(admin, nameof(Roles.Admin)))
             {
                 //get the user that theyre trying to change
                 ApplicationUser? user = await userManager.FindByIdAsync(userId);
 
                 //verify they belong to same company
-                if(user is not null && user.CompanyId == admin.CompanyId)
+                if (user is not null && user.CompanyId == admin.CompanyId)
                 {
                     IList<string> currentRoles = await userManager.GetRolesAsync(user);
                     string? currentRole = currentRoles.FirstOrDefault(r => r != nameof(Roles.DemoUser));
@@ -100,9 +102,55 @@ namespace BugTrackerBC.Services
             return companyUsers;
         }
 
-        public Task UpdateCompanyAsync(Company company, string adminId)
+        public async Task UpdateCompanyAsync(Company company, string adminId)
         {
-            throw new NotImplementedException();
+            using ApplicationDbContext context = contextFactory.CreateDbContext();
+
+            //create a UserManager for this method, similar to creating a dbContext
+
+            using IServiceScope scope = svcProvider.CreateScope();
+            UserManager<ApplicationUser> userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+            //get the user trying to change someone's role
+            ApplicationUser? admin = await userManager.FindByIdAsync(adminId);
+
+            //verify theyre admin
+
+            if (admin is not null && await userManager.IsInRoleAsync(admin, nameof(Roles.Admin)))
+            {
+                bool shouldEdit = await context.Companies.AnyAsync(c => c.Id == company.Id && admin.CompanyId == company.Id);
+                if (shouldEdit == true)
+                {
+
+                    FileUpload? oldImage = null;
+                    if (company.Image != null)
+                    {
+                        context.Files.Add(company.Image); //add images to db table
+
+                        oldImage = await context.Files.FirstOrDefaultAsync(f => f.Id == company.ImageId); //checks for old image
+
+                        company.ImageId = company.Image.Id; //fix the foreign key
+                    }
+
+                    context.Companies.Update(company);
+                    await context.SaveChangesAsync();
+
+                    if (oldImage != null)
+                    {
+                        context.Files.Remove(oldImage);
+
+
+                        await context.SaveChangesAsync();
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Failed to update, company may be null");
+                }
+                }
+            }
+
+
+
         }
     }
-}

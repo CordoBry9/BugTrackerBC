@@ -8,53 +8,97 @@
 @using System.ComponentModel.DataAnnotations
 @rendermode InteractiveServer
 
+<PageTitle>Company | Info </PageTitle>
+
 @if (company != null)
 {
-    <div>
-        <strong>@company.Name</strong>
-    </div>
-    <ul>
-        <li>Employees</li>
-        @if (companymembers != null)
-        {
-            @foreach (UserDTO member in companymembers)
-            {
-                @if(member.Id != userInfo!.UserId)
+    <div class="row d-flex">
+        <div class="col-md-6 mt-2">
+            <div class="card mb-4">
+                <div class="row">
+                    <div class="col col-md-6">
+                        <img src="@company.ImageUrl" class="img-fluid h-100 w-100 img-rounded-left" alt="company logo">
+                    </div>
+                    <div class="col-md-6 card-body d-flex">
+                        <div class="vstack p-1">
+                            <h5 class="card-title">@company.Name</h5>
+                            <p class="card-text">@company.Description</p>
+                            <hr />
+                            <AuthorizeView Roles="Admin">
+                                <div class="mt-3"><a href="/company-edit/@company.Id" class="btn btn-primary">Edit Company</a></div>
+                            </AuthorizeView>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <ul class="list-group mb-5">
+                <strong class="fs-4 mb-3"><u>Employees</u></strong>
+                @if (companymembers != null)
                 {
-                    <li>
-                        Name: @member.FullName Role: @member.Role
-                        <AuthorizeView Roles="Admin" Context="authContext">
-                            <div class="dropdown">
-                                <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    Select A Role
-                                </button>
-                                <ul class="dropdown-menu">
-                                    <EditForm Model="member" OnValidSubmit="() => HandleUpdate(member)">
-                                        <DataAnnotationsValidator></DataAnnotationsValidator>
-                                        <InputSelect class="form-control" @bind-Value="member.Role">
-                                            @foreach (Roles role in Enum.GetValues(typeof(Roles)))
-                                            {
-                                                @if (role != Roles.DemoUser)
-                                                {
-                                                    <option value="@role">@role.GetDisplayName()</option>
-                                                }
-                                            }
-                                        </InputSelect>
-                                        <button type="submit" class="btn btn-primary">Update Role</button>
-                                    </EditForm>
-                                </ul>
-                            </div>
-                        </AuthorizeView>
-                    </li>
+                    @foreach (UserDTO member in companymembers)
+                    {
+                        @if (member.Id != userInfo!.UserId)
+                        {
+                            <li class="list-group-item list-group-item-action" @onclick="() => SelectMember(member)">
+                                Name: @member.FullName
+                                <br />
+                                Role: @member.Role
+                            </li>
+                        }
+                    }
                 }
+            </ul>
+        </div>
+        <div class="col-md-6 p-2 mb-3">
+            @if (selectedMember != null)
+            {
+                <div class="card">
+                    <h5 class="card-header lead fs-2"><b>Edit Member</b></h5>
+                    <div class="card-body">
+                        <EditForm Model="selectedMember" OnValidSubmit="HandleUpdate">
+                            <DataAnnotationsValidator />
+                            <ValidationSummary />
+                            <div class="mb-3">
+                                <label for="fullName" class="form-label lead">Name:</label>
+                                <p id="fullName">@selectedMember.FullName</p>
+                            </div>
+                            <div class="mb-3">
+                                <label for="role" class="form-label lead">Role</label>
+                                <InputSelect id="role" class="form-control" @bind-Value="selectedMember.Role">
+                                    @foreach (Roles role in Enum.GetValues(typeof(Roles)))
+                                    {
+                                        @if (role != Roles.DemoUser)
+                                        {
+                                            <option value="@role">@role.GetDisplayName()</option>
+                                        }
+                                    }
+                                </InputSelect>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Update Role</button>
+                        </EditForm>
+                    </div>
+                </div>
             }
-        }
-    </ul>
+            else
+            {
+                <div class="card">
+                    <h5 class="card-header lead fs-2"><b>Edit Member</b></h5>
+                    <div class="card-title">
+                            <div class="mb-3 p-3">
+                                <div class="lead fs-3">Select an Employee</div>
+                            </div>
+
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
 }
 
 @code {
     private CompanyDTO? company;
     private IEnumerable<UserDTO>? companymembers;
+    private UserDTO? selectedMember;
     private UserInfo? userInfo;
 
     [CascadingParameter]
@@ -67,11 +111,16 @@
         companymembers = await CompanyDTOService.GetCompanyMembersAsync(userInfo.CompanyId);
     }
 
-    private async Task HandleUpdate(UserDTO member)
+    private void SelectMember(UserDTO member)
     {
-        if (userInfo != null)
+        selectedMember = member;
+    }
+
+    private async Task HandleUpdate()
+    {
+        if (userInfo != null && selectedMember != null)
         {
-            await CompanyDTOService.UpdateUserRoleAsync(member, userInfo.UserId);
+            await CompanyDTOService.UpdateUserRoleAsync(selectedMember, userInfo.UserId);
             companymembers = await CompanyDTOService.GetCompanyMembersAsync(userInfo.CompanyId);
         }
     }

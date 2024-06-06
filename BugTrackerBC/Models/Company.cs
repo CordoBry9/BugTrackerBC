@@ -37,7 +37,7 @@ namespace BugTrackerBC.Models
                 Id = company.Id,
                 Name = company.Name,
                 Description = company.Description,
-                ImageUrl = company.Image != null ? $"api/Uploads/{company.Image.Id}" : UploadHelper.DefaultCompanyPicture,
+                ImageUrl = company.ImageId != null ? $"api/Uploads/{company.ImageId}" : UploadHelper.DefaultCompanyPicture,
             };
 
             foreach (Project project in company.Projects)

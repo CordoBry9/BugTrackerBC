@@ -1,6 +1,7 @@
 ﻿using BugTrackerBC.Client.Models;
 using BugTrackerBC.Client.Services.Interfaces;
 using BugTrackerBC.Data;
+using BugTrackerBC.Helpers.Extensions;
 using BugTrackerBC.Models;
 using BugTrackerBC.Services.Interfaces;
 using Microsoft.CodeAnalysis;
@@ -23,7 +24,7 @@ namespace BugTrackerBC.Services
 
             List<UserDTO> members = [];
 
-            foreach(ApplicationUser user in company.Members)
+            foreach (ApplicationUser user in company.Members)
             {
                 UserDTO member = user.ToDTO();
                 member.Role = await _repository.GetUserRoleAsync(user.Id, companyId);
@@ -56,7 +57,7 @@ namespace BugTrackerBC.Services
             IEnumerable<UserDTO> userDTOs = users.Select(u => u.ToDTO());
 
             //dont have to look up their role, we already know what it is
-            foreach(UserDTO user in userDTOs)
+            foreach (UserDTO user in userDTOs)
             {
                 // assing role
 
@@ -66,16 +67,33 @@ namespace BugTrackerBC.Services
             return userDTOs;
         }
 
-        public Task UpdateCompanyAsync(CompanyDTO company, string adminId)
-        {
-            throw new NotImplementedException();
-        }
-
         public async Task UpdateUserRoleAsync(UserDTO user, string adminId)
         {
             if (string.IsNullOrEmpty(user.Role)) return;
 
             await _repository.AddUserToRoleAsync(user.Id!, user.Role, adminId);
+        }
+
+        public async Task UpdateCompanyAsync(CompanyDTO company, string adminId)
+        {
+            Company? updateCompany = await _repository.GetCompanyByIdAsync(company.Id);
+
+            if(updateCompany != null)
+            {
+                updateCompany.Name = company.Name;
+                updateCompany.Description = company.Description;
+
+                if (company.ImageUrl!.StartsWith("data:"))
+                {
+                    updateCompany.Image = UploadHelper.GetFileUpload(company.ImageUrl);
+                }
+                else
+                {
+                    updateCompany.Image = null;
+                }
+                await _repository.UpdateCompanyAsync(updateCompany, adminId);
+            }
+
         }
     }
 }
