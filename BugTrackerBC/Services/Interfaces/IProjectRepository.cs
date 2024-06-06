@@ -1,4 +1,5 @@
-﻿using BugTrackerBC.Models;
+﻿using BugTrackerBC.Data;
+using BugTrackerBC.Models;
 
 namespace BugTrackerBC.Services.Interfaces
 {
@@ -11,6 +12,12 @@ namespace BugTrackerBC.Services.Interfaces
         Task UpdateProjectAsync(Project project, int companyId);
         Task ArchiveProjectAsync(int projectId, int companyId);
         Task RestoreProjectAsync(int projectId, int companyId);
+        Task<IEnumerable<ApplicationUser>> GetProjectMembersAsync(int projectId, int companyId);
+        Task<ApplicationUser?> GetProjectManagerAsync(int projectId, int companyId);
+        Task AddMemberToProjectAsync(int projectId, string userId, string managerId);
+        Task RemoveMemberFromProjectAsync(int projectId, string userId, string managerId);
+        Task AssignProjectManagerAsync(int projectId, string userId, string adminId);
+        Task RemoveProjectManagerAsync(int projectId, string adminId);
 
     }
 }

@@ -42,7 +42,7 @@ namespace BugTrackerBC.Data
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 Email = user.Email,
-                ImageUrl = user.ImageId.HasValue ? $"api/Uploads/{user.ImageId}" : UploadHelper.DefaultProfilePicture,
+                ImageUrl = user.ImageId != null ? $"api/Uploads/{user.ImageId}" : UploadHelper.DefaultProfilePicture,
             };
 
             //if (user.Projects != null)

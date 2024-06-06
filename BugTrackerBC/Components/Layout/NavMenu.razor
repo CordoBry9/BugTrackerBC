@@ -1,106 +1,76 @@
-﻿@implements IDisposable
+﻿<header class="header navbar navbar-expand-lg bg-light shadow-sm shadow-dark-mode-none fixed-top">
+    <div class="container px-3">
+        <a href="index.html" class="navbar-brand pe-3">
+            <img src="assets/img/logo.svg" width="47" alt="Silicon">
+            Silicon
+        </a>
+        <div id="navbarNav" class="offcanvas offcanvas-end">
+            <div class="offcanvas-header border-bottom">
+                <h5 class="offcanvas-title">Menu</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            <div class="offcanvas-body">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <NavLink href="/" class="nav-link active" Match="NavLinkMatch.All">Home</NavLink>
+                    </li>
 
-@inject NavigationManager NavigationManager
+                    <li class="nav-item">
+                        <NavLink href="/company" class="nav-link" Match="NavLinkMatch.Prefix">Company</NavLink>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <NavLink href="/company" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Projects</NavLink>
+                        <div class="dropdown-menu">
+                            <div class="d-flex pt-lg-3">
+                                <div class="dropdown">
+                                    <h6 class="px-3 mb-2">About</h6>
+                                    <ul class="list-unstyled mb-3">
+                                        <li><a href="about-v1.html" class="dropdown-item py-1">Project 1</a></li>
+                                        <li><a href="about-v2.html" class="dropdown-item py-1">Project 2</a></li>
+                                        <li><a href="about-v3.html" class="dropdown-item py-1">Project 3</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
 
-<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">BugTrackerBC</a>
+                    <li class="nav-item dropdown">
+                        <NavLink href="/company" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" Match="NavLinkMatch.Prefix">Tickets</NavLink>
+                        <div class="dropdown-menu">
+                            <div class="d-flex pt-lg-3">
+                                <div class="dropdown">
+                                    <h6 class="px-3 mb-2">About</h6>
+                                    <ul class="list-unstyled mb-3">
+                                        <li><a href="about-v1.html" class="dropdown-item py-1">Project 1</a></li>
+                                        <li><a href="about-v2.html" class="dropdown-item py-1">Project 2</a></li>
+                                        <li><a href="about-v3.html" class="dropdown-item py-1">Project 3</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" aria-current="page">Account</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="account-signin.html" class="dropdown-item">Sign In</a></li>
+                            <li><a href="account-signup.html" class="dropdown-item">Sign Up</a></li>
+                            <li><a href="account-details.html" class="dropdown-item">Account Details</a></li>
+                            <li><a href="account-security.html" class="dropdown-item">Security</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+@*         <div class="form-check form-switch mode-switch pe-lg-1 ms-auto me-4" data-bs-toggle="mode">
+            <input type="checkbox" class="form-check-input" id="theme-mode">
+            <label class="form-check-label d-none d-sm-block" for="theme-mode">Light</label>
+            <label class="form-check-label d-none d-sm-block" for="theme-mode">Dark</label>
+        </div> *@
+        <button type="button" class="navbar-toggler" data-bs-toggle="offcanvas" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
     </div>
-</div>
-
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
-
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-
-        <AuthorizeView>
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="/projects">
-                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Projects
-                </NavLink>
-            </div>
-
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="/tickets">
-                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Tickets
-                </NavLink>
-            </div>
-
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="/company">
-                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Company
-                </NavLink>
-            </div>
-        </AuthorizeView>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="auth">
-                <span class="bi bi-lock-nav-menu" aria-hidden="true"></span> Auth Required
-            </NavLink>
-        </div>
-
-        <AuthorizeView>
-            <Authorized>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="Account/Manage">
-                        <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> @context.User.Identity?.Name
-                    </NavLink>
-                </div>
-                <div class="nav-item px-3">
-                    <form action="Account/Logout" method="post">
-                        <AntiforgeryToken />
-                        <input type="hidden" name="ReturnUrl" value="Account/Login" />
-                        <button type="submit" class="nav-link">
-                            <span class="bi bi-arrow-bar-left-nav-menu" aria-hidden="true"></span> Logout
-                        </button>
-                    </form>
-                </div>
-            </Authorized>
-            <NotAuthorized>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="Account/Register">
-                        <span class="bi bi-person-nav-menu" aria-hidden="true"></span> Register
-                    </NavLink>
-                </div>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="Account/Login">
-                        <span class="bi bi-person-badge-nav-menu" aria-hidden="true"></span> Login
-                    </NavLink>
-                </div>
-            </NotAuthorized>
-        </AuthorizeView>
-    </nav>
-</div>
-
+</header>
 @code {
-    private string? currentUrl;
 
-    protected override void OnInitialized()
-    {
-        currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
-        NavigationManager.LocationChanged += OnLocationChanged;
-    }
-
-    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
-    {
-        currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
-        StateHasChanged();
-    }
-
-    public void Dispose()
-    {
-        NavigationManager.LocationChanged -= OnLocationChanged;
-    }
 }
-

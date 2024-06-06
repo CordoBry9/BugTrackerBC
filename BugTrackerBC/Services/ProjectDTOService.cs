@@ -82,5 +82,35 @@ namespace BugTrackerBC.Services
 
             await _repository.UpdateProjectAsync(updatedProject, companyId);
         }
+
+        public Task<IEnumerable<UserDTO>> GetProjectMembersAsync(int projectId, int companyId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<UserDTO?> GetProjectManagerAsync(int projectId, int companyId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task AddMemberToProjectAsync(int projectId, string memberId, string managerId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task RemoveMemberFromProjectAsync(int projectId, string memberId, string managerId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task AssignProjectManagerAsync(int projectId, string memberId, string adminId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task RemoveProjectManagerAsync(int projectId, string adminId)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

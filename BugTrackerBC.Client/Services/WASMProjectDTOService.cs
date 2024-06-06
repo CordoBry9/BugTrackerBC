@@ -14,6 +14,11 @@ namespace BugTrackerBC.Client.Services
             _httpClient = httpClient;
         }
 
+        public Task AddMemberToProjectAsync(int projectId, string memberId, string managerId)
+        {
+            throw new NotImplementedException();
+        }
+
         public async Task<ProjectDTO> AddProjectAsync(ProjectDTO projectDTO, int companyId)
         {
             HttpResponseMessage response = await _httpClient.PostAsJsonAsync("api/projects", projectDTO);
@@ -28,6 +33,11 @@ namespace BugTrackerBC.Client.Services
         {
             HttpResponseMessage response = await _httpClient.PutAsJsonAsync($"api/projects/{projectId}/archive", companyId);
             response.EnsureSuccessStatusCode();
+        }
+
+        public Task AssignProjectManagerAsync(int projectId, string memberId, string adminId)
+        {
+            throw new NotImplementedException();
         }
 
         public async Task<IEnumerable<ProjectDTO>> GetAllProjectsAsync(int companyId)
@@ -48,6 +58,26 @@ namespace BugTrackerBC.Client.Services
         {
             ProjectDTO? project = await _httpClient.GetFromJsonAsync<ProjectDTO>($"api/projects/{projectId}");
             return project;
+        }
+
+        public Task<UserDTO?> GetProjectManagerAsync(int projectId, int companyId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IEnumerable<UserDTO>> GetProjectMembersAsync(int projectId, int companyId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task RemoveMemberFromProjectAsync(int projectId, string memberId, string managerId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task RemoveProjectManagerAsync(int projectId, string adminId)
+        {
+            throw new NotImplementedException();
         }
 
         public async Task RestoreProjectAsync(int projectId, int companyId)
