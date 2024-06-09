@@ -211,7 +211,7 @@ namespace BugTrackerBC.Services
 
             using ApplicationDbContext context = contextFactory.CreateDbContext();
             using IServiceScope scope = svcProvider.CreateScope();
-            UserManager<ApplicationUser> userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();\
+            UserManager<ApplicationUser> userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
             // get the user trying to add a member to a project
 

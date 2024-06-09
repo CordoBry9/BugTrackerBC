@@ -1,5 +1,6 @@
 ﻿using BugTrackerBC.Client.Models;
 using BugTrackerBC.Client.Services.Interfaces;
+using BugTrackerBC.Data;
 using BugTrackerBC.Models;
 using BugTrackerBC.Services.Interfaces;
 
@@ -8,10 +9,12 @@ namespace BugTrackerBC.Services
     public class ProjectDTOService : IProjectDTOService
     {
         private readonly IProjectRepository _repository;
+        private readonly ICompanyRepository _companyRepository;
 
-        public ProjectDTOService(IProjectRepository repository)
+        public ProjectDTOService(IProjectRepository repository, ICompanyRepository companyRepository)
         {
             _repository = repository;
+            _companyRepository = companyRepository;
         }
 
         public async Task<ProjectDTO> AddProjectAsync(ProjectDTO projectDTO, int companyId)
@@ -83,34 +86,51 @@ namespace BugTrackerBC.Services
             await _repository.UpdateProjectAsync(updatedProject, companyId);
         }
 
-        public Task<IEnumerable<UserDTO>> GetProjectMembersAsync(int projectId, int companyId)
+        public async Task<IEnumerable<UserDTO>> GetProjectMembersAsync(int projectId, int companyId)
         {
-            throw new NotImplementedException();
+            IEnumerable<ApplicationUser> members = await _repository.GetProjectMembersAsync(projectId, companyId);
+
+            List<UserDTO> result = [];
+
+            foreach (ApplicationUser member in members)
+            {
+                UserDTO userDTO = member.ToDTO();
+                userDTO.Role = await _companyRepository.GetUserRoleAsync(member.Id, companyId);
+                result.Add(userDTO);
+            }
+
+            return result;
         }
 
-        public Task<UserDTO?> GetProjectManagerAsync(int projectId, int companyId)
+        public async Task<UserDTO?> GetProjectManagerAsync(int projectId, int companyId)
         {
-            throw new NotImplementedException();
+            ApplicationUser? projectManager = await _repository.GetProjectManagerAsync(projectId,companyId);
+            if (projectManager == null) return null;
+
+            UserDTO userDTO = projectManager.ToDTO();
+            userDTO.Role = nameof(Roles.ProjectManager);
+
+            return userDTO;
         }
 
-        public Task AddMemberToProjectAsync(int projectId, string memberId, string managerId)
+        public async Task AddMemberToProjectAsync(int projectId, string memberId, string managerId)
         {
-            throw new NotImplementedException();
+            await _repository.AddMemberToProjectAsync(projectId, memberId, managerId);
         }
 
-        public Task RemoveMemberFromProjectAsync(int projectId, string memberId, string managerId)
+        public async Task RemoveMemberFromProjectAsync(int projectId, string memberId, string managerId)
         {
-            throw new NotImplementedException();
+            await _repository.RemoveMemberFromProjectAsync(projectId, memberId, managerId);    
         }
 
-        public Task AssignProjectManagerAsync(int projectId, string memberId, string adminId)
+        public async Task AssignProjectManagerAsync(int projectId, string memberId, string adminId)
         {
-            throw new NotImplementedException();
+            await _repository.AssignProjectManagerAsync(projectId, memberId, adminId);
         }
 
-        public Task RemoveProjectManagerAsync(int projectId, string adminId)
+        public async Task RemoveProjectManagerAsync(int projectId, string adminId)
         {
-            throw new NotImplementedException();
+           await _repository.RemoveProjectManagerAsync(projectId, adminId);
         }
     }
 }

@@ -1,0 +1,122 @@
+﻿<div class="card">
+    <div class="card-header">
+        <h5>Manage Project</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-lg-6">
+                <AuthorizeView Roles="Admin" Context="adminContext">
+                    <label for="manager" class="form-label">Company Managers:</label>
+                    <InputSelect id="manager" @bind-Value="assignedManagerId" class="form-control">
+                        <option value="">Select a Manager</option>
+                        @if (projectManagers != null)
+                        {
+                            @foreach (UserDTO manager in projectManagers)
+                            {
+                                @if (manager != null)
+                                {
+                                    <option value="@manager.Id">@manager.FullName</option>
+                                }
+                            }
+                        }
+                    </InputSelect>
+                    <button type="button" class="btn btn-primary mt-2" @onclick="AssignManager">Assign Manager</button>
+
+                    <button type="button" class="btn btn-danger mt-2" @onclick="RemoveManager">Remove Manager</button>
+                </AuthorizeView>
+            </div>
+            <AuthorizeView Roles="Admin, ProjectManager" Context="memberContext">
+                <div class="@(memberContext.User.IsInRole(nameof(Roles.ProjectManager)) ? "col-12" : "col-lg-6")">
+                    <label for="members" class="form-label">Company Members:</label>
+                    <InputSelect id="members" @bind-Value="assignedMemberId" class="form-control">
+                        <option value="">Select a Member</option>
+                        @if (companyMembers != null)
+                        {
+                            @foreach (UserDTO member in companyMembers.Where(cm => cm.Role != nameof(Roles.ProjectManager) && cm.Role != nameof(Roles.DemoUser) && cm.Role != nameof(Roles.Admin)))
+                            {
+                                @if (member != null)
+                                {
+                                    <option value="@member.Id">@member.FullName @member.Role</option>
+                                }
+                            }
+                        }
+                    </InputSelect>
+                    <button type="button" class="btn btn-secondary mt-2" @onclick="AssignMember">Add Member</button>
+
+                    <button type="button" class="btn btn-danger mt-2" @onclick="RemoveMember">Remove Member</button>
+                </div>
+            </AuthorizeView>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public IEnumerable<UserDTO>? projectManagers { get; set; }
+
+    [Parameter, EditorRequired]
+    public EventCallback<string?> assignedManager { get; set; }
+
+    [Parameter, EditorRequired]
+    public UserDTO? projectManager { get; set; }
+
+    [Parameter, EditorRequired]
+    public IEnumerable<UserDTO>? companyMembers { get; set; }
+
+    [Parameter, EditorRequired]
+    public EventCallback<string?> assignedMember { get; set; }
+
+    [Parameter, EditorRequired]
+    public EventCallback<string?> removeProjectManager { get; set; }
+
+    [Parameter, EditorRequired]
+    public EventCallback<string?> removeMember { get; set; }
+
+    [Parameter, EditorRequired]
+    public UserInfo? userInfo { get; set; }
+
+    private string? assignedManagerId;
+    private string? assignedMemberId;
+
+
+    private async Task AssignManager()
+    {
+        if (!string.IsNullOrEmpty(assignedManagerId))
+        {
+            await assignedManager.InvokeAsync(assignedManagerId);
+        }
+    }
+
+    private async Task AssignMember()
+    {
+        if (!string.IsNullOrEmpty(assignedMemberId))
+        {
+            await assignedMember.InvokeAsync(assignedMemberId);
+        }
+    }
+
+    private async Task RemoveManager()
+    {
+        if (!string.IsNullOrEmpty(assignedManagerId))
+        {
+            await removeProjectManager.InvokeAsync(assignedManagerId);
+        }
+    }
+
+    private async Task RemoveMember()
+    {
+        try
+        {
+            if (!string.IsNullOrEmpty(assignedMemberId))
+            {
+                await removeMember.InvokeAsync(assignedMemberId);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
+
+
+    }
+}

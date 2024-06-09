@@ -3,10 +3,12 @@
 @using BugTrackerBC.Client.Components.UI.TicketsUI
 @using BugTrackerBC.Client.Models
 @using BugTrackerBC.Client.Services.Interfaces
+@using Microsoft.AspNetCore.Authorization
 @inject ITicketDTOService TicketDTOService
 @inject IProjectDTOService ProjectDTOService
 @inject NavigationManager Nav
 @rendermode InteractiveAuto
+@attribute [Authorize]
 
 @if (archivedView == false)
 {

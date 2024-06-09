@@ -7,6 +7,7 @@
 @inject NavigationManager Nav
 @rendermode InteractiveAuto
 
+
 @if (ticket != null)
 {
     <div class="row row-cols-1 row-cols-md-2 g-4">
@@ -30,11 +31,11 @@
                 </div>
             </div>
 
-            <section class="container pt-xl-2">
+            <div class="col pt-xl-2">
                 <div>
                     <TicketCommentForm Comment="comment" CreateTheComment="HandleSubmit"></TicketCommentForm>
                 </div>
-            </section>
+            </div>
 
             <h4 class="">Comments:</h4>
             <hr />
@@ -47,7 +48,7 @@
             }
         </div>
 
-        <div class="col">
+        <div class="col order-2">
             <div class="border rounded p-3">
                 <TicketAttachments TicketId="ticketId" OnChange="HandleChange"></TicketAttachments>
                 <hr />
@@ -87,6 +88,10 @@
                 </div>
             </div>
         </div>
+
+        <div class="col">
+
+        </div>
     </div>
 }
 
@@ -111,6 +116,7 @@
         projects = await ProjectDTOService.GetAllProjectsAsync(userInfo!.CompanyId);
         project = await ProjectDTOService.GetProjectByIdAsync(ticket!.ProjectId, userInfo!.CompanyId);
         comments = await TicketDTOService.GetTicketCommentsAsync(ticketId, userInfo!.CompanyId);
+
         comment = new TicketCommentDTO()
             {
                 UserId = userInfo.UserId,

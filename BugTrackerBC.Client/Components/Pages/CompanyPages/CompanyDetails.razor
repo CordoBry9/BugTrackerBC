@@ -1,132 +1,150 @@
 ﻿@page "/company"
+@using BugTrackerBC.Client.Components.UI
 @using BugTrackerBC.Client.Helpers
 @using BugTrackerBC.Client.Models
 @using BugTrackerBC.Client.Services.Interfaces
 @inject ICompanyDTOService CompanyDTOService
 @inject NavigationManager Nav
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.Forms
 @using System.ComponentModel.DataAnnotations
 @rendermode InteractiveAuto
+@attribute [Authorize]
 
 <PageTitle>Company | Info </PageTitle>
+ @*
+     TODO:
 
-@if (company != null)
+ Add error for authorizations
+ Fix images on listgroup
+ *@
+ 
+@if (userInfo != null && company != null)
 {
-    
 
-
-        <div class="row d-flex py-3">
-            <div class="col-md-6 mt-2 d-flex">
-                <div class="card mb-4 flex-grow-1">
-                    <div class="row">
-                        <div class="col">
-                            <img src="@company.ImageUrl" class="img-fluid rounded-top" alt="company logo">
-                        </div>
-                        <div class="col card-body d-flex">
-                            <div class="vstack p-1">
-                                <h5 class="card-title">@company.Name</h5>
-                                <p class="card-text">@company.Description</p>
-                                <hr />
-                                <AuthorizeView Roles="Admin">
-                                    <div class="mt-3"><a href="/company-edit/@company.Id" class="btn btn-primary">Edit Company</a></div>
-                                </AuthorizeView>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-            <div class="col-md-6 p-2 mb-3 d-flex">
-                @if (selectedMember != null)
-                {
-
-                    <div class="card flex-grow-1 w-100">
-                        <h5 class="card-header fs-3"><b>Edit Member</b></h5>
-                        <div class="card-body">
-                            <EditForm Model="selectedMember" OnValidSubmit="HandleUpdate">
-                                <DataAnnotationsValidator />
-                                <ValidationSummary />
-                                <div class="mb-3 text-center">
-                                    <label for="fullName" class="form-label">Name:</label>
-                                    <p id="fullName">@selectedMember.FullName</p>
-                                </div>
-                                <div class="mb-3 text-center">
-                                    <label for="role" class="form-label">Role:</label>
-                                    <InputSelect id="role" class="form-control" @bind-Value="selectedMember.Role">
-                                        @foreach (Roles role in Enum.GetValues(typeof(Roles)))
-                                        {
-                                            @if (role != Roles.DemoUser)
-                                            {
-                                                <option value="@role">@role.GetDisplayName()</option>
-                                            }
-                                        }
-                                    </InputSelect>
-
-                                </div>
-                                <div class="col-12 text-center px-5">
-                                    <img src="@(string.IsNullOrEmpty(selectedMember.ImageUrl) ? FileHelper.DefaultProfilePicture : selectedMember.ImageUrl)" class="img-fluid previewUpload" />
-                                    <InputFile OnChange="OnFileChange" class="form-control mt-2" accept=".png, .jpg, .jpeg, .svg" />
-
-                                    <div>
-                                        <span class="text-danger">
-                                            @imageError
-                                        </span>
-                                    </div>
-                                </div>
-                                <div class="text-center">
-                                    <button type="submit" class="btn btn-primary mt-3">Update Role</button>
-                                </div>
-                                
-                            </EditForm>
-                        </div>
-                    </div>
-                }
-                else
-                {
-                    <div class="card flex-grow-1 w-100">
-                        <h5 class="card-header fs-2"><b>Edit Member</b></h5>
-                        <div class="card-body">
-                            <div class="mb-3">
-                                <div class="fs-3">Select an Employee</div>
-                            </div>
-
-                        </div>
-                    </div>
-                }
-            </div>
-        </div>
-
+    <AuthorizeView Roles="Admin" Context="authContext">
+        <Authorized>
+            <div class="row d-flex py-3">
+                <div class="col-md-6 mt-2 d-flex">
+                    <div class="card mb-4 flex-grow-1">
                         <div class="row">
-                    <div class="col-12">
-                        <ul class="list-group mb-5 py-3">
-                            <div class="fs-4 mb-3"><u>Employees</u></div>
-                            @if (companymembers != null)
+                            <div class="col">
+                                <img src="@company.ImageUrl" class="img-fluid rounded-top" alt="company logo">
+                            </div>
+                            <div class="col card-body d-flex">
+                                <div class="vstack p-1">
+                                    <h5 class="card-title">@company.Name</h5>
+                                    <p class="card-text">@company.Description</p>
+                                    <hr />
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="col-md-6 p-2 mb-3 d-flex">
+                    @if (selectedMember != null)
+                    {
+
+                        <div class="card flex-grow-1 w-100">
+                            <h5 class="card-header fs-3"><b>Edit Member</b></h5>
+                            <div class="card-body">
+                                <EditForm Model="selectedMember" OnValidSubmit="HandleUpdate">
+                                    <DataAnnotationsValidator />
+                                    <ValidationSummary />
+                                    <div class="mb-3 text-center">
+                                        <label for="fullName" class="form-label">Name:</label>
+                                        <p id="fullName">@selectedMember.FullName</p>
+                                    </div>
+                                    <div class="mb-3 text-center">
+                                        <label for="role" class="form-label">Role:</label>
+                                        <InputSelect id="role" class="form-control" @bind-Value="selectedMember.Role">
+                                            @foreach (Roles role in Enum.GetValues(typeof(Roles)))
+                                            {
+                                                @if (role != Roles.DemoUser)
+                                                {
+                                                    <option value="@role">@role.GetDisplayName()</option>
+                                                    //figure out why not showing display name
+                                                }
+                                            }
+                                        </InputSelect>
+
+                                    </div>
+                                    <div class="col-12 text-center px-5">
+                                        <img src="@(string.IsNullOrEmpty(selectedMember.ImageUrl) ? FileHelper.DefaultProfilePicture : selectedMember.ImageUrl)" class="img-fluid previewUpload" />
+                                        <InputFile OnChange="OnFileChange" class="form-control mt-2" accept=".png, .jpg, .jpeg, .svg" />
+
+                                        <div>
+                                            <span class="text-danger">
+                                                @imageError
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="text-center">
+                                        <button type="submit" class="btn btn-primary mt-3">Update Role</button>
+                                    </div>
+
+                                </EditForm>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="card flex-grow-1 w-100">
+                            <h5 class="card-header fs-2"><b>Edit Member</b></h5>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <div class="fs-3">Select an Employee</div>
+                                </div>
+
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <ul class="list-group mb-5 py-3">
+                        <div class="fs-4 mb-3"><u>Employees</u></div>
+                        @if (companymembers != null)
+                        {
+                            @foreach (UserDTO member in companymembers)
                             {
-                                @foreach (UserDTO member in companymembers)
+                                @if (member.Id != userInfo!.UserId)
                                 {
-                                    @if (member.Id != userInfo!.UserId)
-                                    {
-                                        <li class="list-group-item list-group-item-action" @onclick="() => SelectMember(member)">
-                                            <div class="row d-flex py-2">
-                                                <span class="col-md-4 col-lg-2 d-flex text-decoration-none text-dark align-items-center border-rounded">
-                                                    <img src="@member.ImageUrl" class="me-3 previewImage" />
-                                                </span>
-                                                <span class="col-md-8 col-lg-10 align-items-start justify-content-start">
-                                            <p> @member.FullName</p>
-                                                    <hr class="py-2" />
-                                            <p class="">@member.Role</p>
-                                                </span>
-                                            </div>
+                                    <li class="list-group-item list-group-item-action" @onclick="() => SelectMember(member)">
+                                        <div class="row d-flex py-2">
+                                            <span class="col-md-4 col-lg-2 d-flex text-decoration-none text-dark align-items-center border-rounded">
+                                                <img src="@member.ImageUrl" class="me-3 previewImage" />
+                                            </span>
+                                            <span class="col-md-8 col-lg-10 align-items-start justify-content-start">
+                                                <p> @member.FullName</p>
+                                                <hr class="py-2" />
+                                                <p class="">@member.Role</p> @* find a way to show display name here *@
+                                            </span>
+                                        </div>
 
 
-                                        </li>
-                                    }
+                                    </li>
                                 }
                             }
-                        </ul>
-                    </div>
+                        }
+                    </ul>
                 </div>
+            </div>
+        </Authorized>
+        <NotAuthorized>
+            <Message DisplayMessage="@authErrorMsg" Title="@authErrorTitle"></Message>
+        </NotAuthorized>
+    </AuthorizeView>
+@*     Fix this later to just have certain columns show when not an admin (like the turnary statement you made earlier) *@
+}   
+else
+{
+    <h1>Please Sign in</h1>
 }
 
 @code {
@@ -139,12 +157,24 @@
     private UserDTO? selectedMember;
     private UserInfo? userInfo;
     private string? imageError;
+    public string authErrorMsg = "User not authorized to access this page";
+    public string authErrorTitle = "Authorization Error";
+    public string authErrorCSS = "alert-primary";
+
 
     protected override async Task OnInitializedAsync()
     {
         userInfo = await UserInfoHelper.GetUserInfoAsync(AuthStateTask);
-        company = await CompanyDTOService.GetCompanyByIdAsync(userInfo!.CompanyId);
-        companymembers = await CompanyDTOService.GetCompanyMembersAsync(userInfo.CompanyId);
+        if (userInfo != null)
+        {
+            company = await CompanyDTOService.GetCompanyByIdAsync(userInfo.CompanyId);
+            companymembers = await CompanyDTOService.GetCompanyMembersAsync(userInfo.CompanyId);
+        }
+        else
+        {
+
+        }
+
     }
 
     private void SelectMember(UserDTO member)

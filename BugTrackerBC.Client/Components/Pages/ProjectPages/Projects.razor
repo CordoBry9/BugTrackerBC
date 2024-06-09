@@ -2,10 +2,16 @@
 @using BugTrackerBC.Client.Components.UI.ProjectsUI
 @using BugTrackerBC.Client.Models
 @using BugTrackerBC.Client.Services.Interfaces
+@using Microsoft.AspNetCore.Authorization
 @inject IProjectDTOService ProjectDTOService
 @inject NavigationManager Nav
 @rendermode InteractiveAuto
+@attribute [Authorize]
 
+@if(userInfo == null)
+{
+    <h1>Please Log In</h1>
+}
 @if (archivedView == false)
 {
     <AuthorizeView>
@@ -120,9 +126,18 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+
         userInfo = await UserInfoHelper.GetUserInfoAsync(AuthStateTask);
-        projects = (await ProjectDTOService.GetAllProjectsAsync(userInfo!.CompanyId)).ToList();
-        archivedProjects = (await ProjectDTOService.GetArchivedProjects(userInfo!.CompanyId)).ToList();
+        if(userInfo is not null)
+        {
+            projects = (await ProjectDTOService.GetAllProjectsAsync(userInfo!.CompanyId)).ToList();
+            archivedProjects = (await ProjectDTOService.GetArchivedProjects(userInfo!.CompanyId)).ToList();
+        }
+        else
+        {
+            Console.WriteLine("User is not logged in");
+        }
+
     }
 
     private async Task HandleSubmit()

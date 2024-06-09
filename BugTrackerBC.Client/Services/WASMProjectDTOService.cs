@@ -14,9 +14,10 @@ namespace BugTrackerBC.Client.Services
             _httpClient = httpClient;
         }
 
-        public Task AddMemberToProjectAsync(int projectId, string memberId, string managerId)
+        public async Task AddMemberToProjectAsync(int projectId, string memberId, string managerId)
         {
-            throw new NotImplementedException();
+            HttpResponseMessage response = await _httpClient.PutAsJsonAsync($"api/projects/{projectId}/addmembers", memberId);
+            response.EnsureSuccessStatusCode();
         }
 
         public async Task<ProjectDTO> AddProjectAsync(ProjectDTO projectDTO, int companyId)
@@ -35,9 +36,10 @@ namespace BugTrackerBC.Client.Services
             response.EnsureSuccessStatusCode();
         }
 
-        public Task AssignProjectManagerAsync(int projectId, string memberId, string adminId)
+        public async Task AssignProjectManagerAsync(int projectId, string memberId, string adminId)
         {
-            throw new NotImplementedException();
+            HttpResponseMessage response = await _httpClient.PutAsJsonAsync($"api/projects/{projectId}/manager", memberId);
+            response.EnsureSuccessStatusCode();
         }
 
         public async Task<IEnumerable<ProjectDTO>> GetAllProjectsAsync(int companyId)
@@ -60,24 +62,39 @@ namespace BugTrackerBC.Client.Services
             return project;
         }
 
-        public Task<UserDTO?> GetProjectManagerAsync(int projectId, int companyId)
+        public async Task<UserDTO?> GetProjectManagerAsync(int projectId, int companyId)
         {
-            throw new NotImplementedException();
+
+            try
+            {
+                UserDTO? manager = await _httpClient.GetFromJsonAsync<UserDTO>($"api/projects/{projectId}/manager");
+                return manager;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return null;
+            }
+
         }
 
-        public Task<IEnumerable<UserDTO>> GetProjectMembersAsync(int projectId, int companyId)
+        public async Task<IEnumerable<UserDTO>> GetProjectMembersAsync(int projectId, int companyId)
         {
-            throw new NotImplementedException();
+            IEnumerable<UserDTO> projectMembers = (await _httpClient.GetFromJsonAsync<IEnumerable<UserDTO>>($"/api/projects/{projectId}/members"))!;
+
+            return projectMembers;
         }
 
-        public Task RemoveMemberFromProjectAsync(int projectId, string memberId, string managerId)
+        public async Task RemoveMemberFromProjectAsync(int projectId, string memberId, string managerId)
         {
-            throw new NotImplementedException();
+            HttpResponseMessage response = await _httpClient.DeleteAsync($"api/projects/{projectId}/members/{memberId}");
+            response.EnsureSuccessStatusCode();
         }
 
-        public Task RemoveProjectManagerAsync(int projectId, string adminId)
+        public async Task RemoveProjectManagerAsync(int projectId, string adminId)
         {
-            throw new NotImplementedException();
+            HttpResponseMessage response = await _httpClient.DeleteAsync($"api/projects/{projectId}/manager");
+            response.EnsureSuccessStatusCode();
         }
 
         public async Task RestoreProjectAsync(int projectId, int companyId)

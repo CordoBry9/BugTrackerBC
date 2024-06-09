@@ -1,0 +1,22 @@
+﻿
+
+<div class="@cssClass p-2 border border-1 border-dark rounded-3">
+    <h4>
+        @Title
+    </h4>
+    <p>@DisplayMessage</p>
+
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public string Title { get; set; } = "Title Goes Here";
+
+
+    [Parameter, EditorRequired]
+    public string DisplayMessage { get; set; } = "Message Goes Here";  
+
+    [Parameter]
+    public string cssClass { get; set; } = "alert-primary";
+
+}

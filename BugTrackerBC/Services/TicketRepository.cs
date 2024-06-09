@@ -113,6 +113,8 @@ namespace BugTrackerBC.Services
 
             Ticket? existingTicket = await context.Tickets
                                               .Include(t => t.Project)
+                                              .Include(t => t.SubmitterUser)
+                                              .Include(t => t.DeveloperUser)
                                               .FirstOrDefaultAsync(t => t.Id == ticket.Id && t.Project!.CompanyId == companyId);
 
             if (existingTicket == null)

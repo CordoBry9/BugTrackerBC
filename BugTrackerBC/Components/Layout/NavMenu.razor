@@ -1,6 +1,11 @@
-﻿<header class="header navbar navbar-expand-lg bg-light shadow-sm shadow-dark-mode-none fixed-top">
+﻿@using BugTrackerBC.Client.Models
+@using BugTrackerBC.Client.Services.Interfaces
+@inject ICompanyDTOService CompanyDTOService
+@inject IProjectDTOService ProjectDTOService
+
+<header class="header navbar navbar-expand-lg bg-light shadow-sm shadow-dark-mode-none fixed-top">
     <div class="container px-3">
-        <a href="index.html" class="navbar-brand pe-3">
+        <a href="/" class="navbar-brand pe-3">
             <img src="assets/img/logo.svg" width="47" alt="Silicon">
             Silicon
         </a>
@@ -19,13 +24,13 @@
                         <NavLink href="/company" class="nav-link" Match="NavLinkMatch.Prefix">Company</NavLink>
                     </li>
                     <li class="nav-item dropdown">
-                        <NavLink href="/company" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Projects</NavLink>
+                        <NavLink href="/projects" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Projects</NavLink>
                         <div class="dropdown-menu">
                             <div class="d-flex pt-lg-3">
                                 <div class="dropdown">
                                     <h6 class="px-3 mb-2">About</h6>
                                     <ul class="list-unstyled mb-3">
-                                        <li><a href="about-v1.html" class="dropdown-item py-1">Project 1</a></li>
+                                        <li><a href="/projects" class="dropdown-item py-1">Project 1</a></li>
                                         <li><a href="about-v2.html" class="dropdown-item py-1">Project 2</a></li>
                                         <li><a href="about-v3.html" class="dropdown-item py-1">Project 3</a></li>
                                     </ul>
@@ -35,36 +40,63 @@
                     </li>
 
                     <li class="nav-item dropdown">
-                        <NavLink href="/company" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" Match="NavLinkMatch.Prefix">Tickets</NavLink>
+                        <NavLink href="/tickets" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" Match="NavLinkMatch.Prefix">Tickets</NavLink>
                         <div class="dropdown-menu">
                             <div class="d-flex pt-lg-3">
                                 <div class="dropdown">
                                     <h6 class="px-3 mb-2">About</h6>
                                     <ul class="list-unstyled mb-3">
-                                        <li><a href="about-v1.html" class="dropdown-item py-1">Project 1</a></li>
-                                        <li><a href="about-v2.html" class="dropdown-item py-1">Project 2</a></li>
-                                        <li><a href="about-v3.html" class="dropdown-item py-1">Project 3</a></li>
+                                        <li><a href="/tickets" class="dropdown-item py-1">Ticket 1</a></li>
                                     </ul>
                                 </div>
                             </div>
                         </div>
                     </li>
+
                     <li class="nav-item dropdown">
-                        <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" aria-current="page">Account</a>
-                        <ul class="dropdown-menu">
-                            <li><a href="account-signin.html" class="dropdown-item">Sign In</a></li>
-                            <li><a href="account-signup.html" class="dropdown-item">Sign Up</a></li>
-                            <li><a href="account-details.html" class="dropdown-item">Account Details</a></li>
-                            <li><a href="account-security.html" class="dropdown-item">Security</a></li>
-                        </ul>
+                        <a href="#" class="dropdown-toggle nav-link" data-bs-toggle="dropdown" aria-current="page">Account</a>
+                        <AuthorizeView>
+                            <Authorized>
+                                <ul class="dropdown-menu">
+                                    <li class="dropdown-item">
+                                        <NavLink class="nav-link" href="Account/Manage">
+                                            @context.User.Identity?.Name
+                                        </NavLink>
+                                    </li>
+                                    <li class=" dropdown-item">
+                                        <form action="Account/Logout" method="post">
+                                            <AntiforgeryToken />
+                                            <input type="hidden" name="ReturnUrl" value="Account/Login" />
+                                            <button type="submit" class="nav-link">
+                                                Logout
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </Authorized>
+                            <NotAuthorized>
+                                <ul class="dropdown-menu">
+                                    <li class="dropdown-item">
+                                        <NavLink class="nav-link" href="Account/Login">
+                                            Login
+                                        </NavLink>
+                                    </li>
+                                    <li class="dropdown-item">
+                                        <NavLink class="nav-link" href="Account/Register">
+                                            Register
+                                        </NavLink>
+                                    </li>
+                                </ul>
+                            </NotAuthorized>
+                        </AuthorizeView>
                     </li>
                 </ul>
             </div>
         </div>
-@*         <div class="form-check form-switch mode-switch pe-lg-1 ms-auto me-4" data-bs-toggle="mode">
-            <input type="checkbox" class="form-check-input" id="theme-mode">
-            <label class="form-check-label d-none d-sm-block" for="theme-mode">Light</label>
-            <label class="form-check-label d-none d-sm-block" for="theme-mode">Dark</label>
+        @*         <div class="form-check form-switch mode-switch pe-lg-1 ms-auto me-4" data-bs-toggle="mode">
+        <input type="checkbox" class="form-check-input" id="theme-mode">
+        <label class="form-check-label d-none d-sm-block" for="theme-mode">Light</label>
+        <label class="form-check-label d-none d-sm-block" for="theme-mode">Dark</label>
         </div> *@
         <button type="button" class="navbar-toggler" data-bs-toggle="offcanvas" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -72,5 +104,22 @@
     </div>
 </header>
 @code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    private IEnumerable<ProjectDTO> projects = [];
+    private ProjectDTO? project;
+    private UserInfo? userInfo;
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        userInfo = await UserInfoHelper.GetUserInfoAsync(AuthStateTask);
+        if (userInfo != null)
+        {
+            projects = await ProjectDTOService.GetAllProjectsAsync(userInfo.CompanyId);
+        }
+
+    }
 
 }
