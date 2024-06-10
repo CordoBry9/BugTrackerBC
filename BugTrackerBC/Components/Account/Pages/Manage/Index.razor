@@ -70,7 +70,7 @@
         user = await UserAccessor.GetRequiredUserAsync(HttpContext);
         username = await UserManager.GetUserNameAsync(user);
         Input.FirstName = string.IsNullOrEmpty(Input.FirstName) ? user.FirstName : Input.FirstName;
-        Input.FirstName = string.IsNullOrEmpty(Input.LastName) ? user.LastName : Input.LastName;
+        Input.LastName = string.IsNullOrEmpty(Input.LastName) ? user.LastName : Input.LastName;
     }
 
     private async Task OnValidSubmitAsync()

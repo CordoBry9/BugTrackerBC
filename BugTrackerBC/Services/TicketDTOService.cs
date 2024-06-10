@@ -57,6 +57,11 @@ namespace BugTrackerBC.Services
         {
             await _repository.ArchiveTicketAsync(ticketId, companyId);
         }
+        public async Task<IEnumerable<TicketDTO>> GetMemberTicketsAsync(int companyId, string userId)
+        {
+            IEnumerable<Ticket> memberTickets = await _repository.GetMemberTicketsAsync(companyId, userId);
+            return memberTickets.Select(t => t.ToDTO()).ToList();
+        }
 
         public async Task RestoreTicketAsync(int ticketId, int companyId)
         {
@@ -65,25 +70,26 @@ namespace BugTrackerBC.Services
 
         public async Task UpdateTicketAsync(TicketDTO ticketDTO, int companyId, string userId)
         {
-            Ticket updatedTicket = new Ticket
+            Ticket? updatedTicket = await _repository.GetTicketByIdAsync(ticketDTO.Id, companyId);
+            if(updatedTicket != null)
             {
-                Id = ticketDTO.Id,
-                Title = ticketDTO.Title,
-                Description = ticketDTO.Description,
-                Created = ticketDTO.Created,
-                Priority = ticketDTO.Priority,
-                Updated = DateTimeOffset.Now,
-                Archived = ticketDTO.Archived,
-                ArchivedByProject = ticketDTO.ArchivedByProject,
-                Type = ticketDTO.Type,
-                Status = ticketDTO.Status,
-                ProjectId = ticketDTO.ProjectId,
-                SubmitterUserId = ticketDTO.SubmitterUserId,
-                DeveloperUserId = ticketDTO.DeveloperUserId,
+                updatedTicket.Id = ticketDTO.Id;
+                updatedTicket.Title = ticketDTO.Title;
+                updatedTicket.Description = ticketDTO.Description;
+                updatedTicket.Created = ticketDTO.Created;
+                updatedTicket.Priority = ticketDTO.Priority;
+                updatedTicket.Updated = DateTimeOffset.Now;
+                updatedTicket.Archived = ticketDTO.Archived;
+                updatedTicket.ArchivedByProject = ticketDTO.ArchivedByProject;
+                updatedTicket.Type = ticketDTO.Type;
+                updatedTicket.Status = ticketDTO.Status;
+                updatedTicket.SubmitterUserId = ticketDTO.SubmitterUserId;
+                updatedTicket.DeveloperUserId = ticketDTO.DeveloperUserId;
+                updatedTicket.DeveloperUser = null;
 
-            };
+                await _repository.UpdateTicketAsync(updatedTicket, companyId, userId);
 
-            await _repository.UpdateTicketAsync(updatedTicket, companyId, userId);
+            }
         }
 
         public async Task<IEnumerable<TicketCommentDTO>> GetTicketCommentsAsync(int ticketId, int companyId)
@@ -159,5 +165,6 @@ namespace BugTrackerBC.Services
         {
             await _repository.DeleteTicketAttachment(attachmentId, companyId);
         }
+
     }
 }

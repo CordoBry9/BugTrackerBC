@@ -23,20 +23,36 @@
                     <li class="nav-item">
                         <NavLink href="/company" class="nav-link" Match="NavLinkMatch.Prefix">Company</NavLink>
                     </li>
-                    <li class="nav-item dropdown">
-                        <NavLink href="/projects" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Projects</NavLink>
-                        <div class="dropdown-menu">
-                            <div class="d-flex pt-lg-3">
-                                <div class="dropdown">
-                                    <h6 class="px-3 mb-2">About</h6>
-                                    <ul class="list-unstyled mb-3">
-                                        <li><a href="/projects" class="dropdown-item py-1">Project 1</a></li>
-                                        <li><a href="about-v2.html" class="dropdown-item py-1">Project 2</a></li>
-                                        <li><a href="about-v3.html" class="dropdown-item py-1">Project 3</a></li>
-                                    </ul>
+                    <li class="nav-item">
+                        <AuthorizeView>
+                            <Authorized>
+
+                            @if (context.User.IsInRole(nameof(Roles.Admin)))
+                            {
+                                <NavLink href="/all-projects" class="nav-link" Match="NavLinkMatch.Prefix">Projects</NavLink>
+                            }
+                                @if (context.User.IsInRole(nameof(Roles.Submitter)) || context.User.IsInRole(nameof(Roles.ProjectManager)) || context.User.IsInRole(nameof(Roles.Developer)))
+                            {
+                                <NavLink href="/my-projects" class="nav-link" Match="NavLinkMatch.Prefix">Projects</NavLink>
+                            }
+                            </Authorized>
+                            <NotAuthorized>
+                                <NavLink href="/my-projects" class="nav-link" Match="NavLinkMatch.Prefix">Projects</NavLink>
+                            </NotAuthorized>
+                            @*                             <div class="dropdown-menu">
+                                <div class="d-flex pt-lg-3">
+                                    <div class="dropdown">
+                                        <h6 class="px-3 mb-2">About</h6>
+
+                                        <ul class="list-unstyled mb-3">
+                                            <li><a href="/all-projects" class="dropdown-item py-1">Projects</a></li>
+                                            <li><a href="/my-projects" class="dropdown-item py-1">My Projects</a></li>
+                                        </ul>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
+                            </div> *@
+                        </AuthorizeView>
+
                     </li>
 
                     <li class="nav-item dropdown">

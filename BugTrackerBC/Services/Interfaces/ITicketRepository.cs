@@ -9,12 +9,11 @@ namespace BugTrackerBC.Services.Interfaces
     {
 
         Task<IEnumerable<Ticket>> GetAllTicketsAsync(int companyId);
-
         Task<Ticket?> GetTicketByIdAsync(int ticketId, int companyId);
-
+        Task<IEnumerable<Ticket>> GetMemberTicketsAsync(int companyId, string userId);
         Task<Ticket> AddTicketAsync(Ticket ticket, int companyId);
         // you will not need userId at this point, but put it in the method anyways for future authorization features O references
-        Task<Ticket> UpdateTicketAsync(Ticket ticket, int companyId, string userId);
+        Task UpdateTicketAsync(Ticket ticket, int companyId, string userId);
 
         Task ArchiveTicketAsync(int ticketId, int companyId);
 

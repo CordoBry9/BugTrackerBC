@@ -56,6 +56,16 @@ namespace BugTrackerBC.Client.Services
             return response;
         }
 
+        public Task<IEnumerable<ProjectDTO>> GetMemberArchivedProjectsAsync(int companyId, string memberId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IEnumerable<ProjectDTO>> GetMemberProjectsAsync(int companyId, string memberId)
+        {
+            throw new NotImplementedException();
+        }
+
         public async Task<ProjectDTO?> GetProjectByIdAsync(int projectId, int companyId)
         {
             ProjectDTO? project = await _httpClient.GetFromJsonAsync<ProjectDTO>($"api/projects/{projectId}");

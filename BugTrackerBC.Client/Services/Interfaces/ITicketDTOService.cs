@@ -8,6 +8,8 @@ namespace BugTrackerBC.Client.Services.Interfaces
 
         Task<TicketDTO?> GetTicketByIdAsync(int ticketId, int companyId);
 
+        Task<IEnumerable<TicketDTO>> GetMemberTicketsAsync(int companyId, string userId);
+
         Task<TicketDTO> AddTicketAsync(TicketDTO ticket, int companyId);
 
         Task UpdateTicketAsync(TicketDTO ticket, int companyId, string userId);

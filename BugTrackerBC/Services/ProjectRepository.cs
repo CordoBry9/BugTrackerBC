@@ -172,6 +172,29 @@ namespace BugTrackerBC.Services
                 await context.SaveChangesAsync();
             }
         }
+        public async Task<IEnumerable<Project>> GetMemberProjectsAsync(int companyId, string memberId)
+        {
+            using ApplicationDbContext context = contextFactory.CreateDbContext();
+
+            IEnumerable<Project> projects = await context.Projects
+                .Where(p => p.CompanyId == companyId && p.Members.Any(m => m.Id == memberId))
+                .Include(p => p.Tickets)
+                .Include(p => p.Members).ToListAsync();
+
+            return projects;
+        }
+
+        public async Task<IEnumerable<Project>> GetMemberArchivedProjectsAsync(int companyId, string memberId)
+        {
+            using ApplicationDbContext context = contextFactory.CreateDbContext();
+
+            IEnumerable<Project> projects = await context.Projects
+                .Where(p => p.CompanyId == companyId && p.Archived == true && p.Members.Any(m => m.Id == memberId))
+                .Include(p => p.Tickets)
+                .Include(p => p.Members).ToListAsync();
+
+            return projects;
+        }
 
         public async Task<IEnumerable<ApplicationUser>> GetProjectMembersAsync(int projectId, int companyId)
         {
@@ -356,7 +379,6 @@ namespace BugTrackerBC.Services
             }
 
         }
-
 
     }
 }

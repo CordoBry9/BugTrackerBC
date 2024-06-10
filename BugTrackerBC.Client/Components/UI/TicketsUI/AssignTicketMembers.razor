@@ -1,0 +1,101 @@
+﻿@if (Ticket != null && userInfo != null)
+{
+    <div class="card">
+        <div class="card-header">
+            <h5>Manage Ticket</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-lg-12">
+                    <AuthorizeView Roles="Admin, ProjectManager" Context="devContext">
+                        <label for="developer" class="form-label">Project Developers:</label>
+                        <InputSelect id="developer" @bind-Value="Ticket.DeveloperUserId" class="form-control">
+                            <option value="">Assign a Developer</option>
+
+                            @if (projectMembers != null)
+                            {
+                                @if (projectManager is not null && devContext.User.IsInRole(nameof(Roles.ProjectManager)) && userInfo.UserId == projectManager.Id || devContext.User.IsInRole(nameof(Roles.Admin)))
+                                {
+
+                                    @foreach (UserDTO developer in projectMembers.Where(pm => pm.Role == nameof(Roles.Developer)))
+                                    {
+                                        <option value="@developer.Id">@developer.FullName</option>
+                                    }
+
+                                }
+                                else
+                                {
+                                    <p>Only admins and the projects project manager can assign developers</p>
+                                }
+
+                            }
+                        </InputSelect>
+                        <button type="button" class="btn btn-primary mt-2" @onclick="AssignDeveloper">Change Developer</button>
+
+                    </AuthorizeView>
+                </div>
+                @*             <AuthorizeView Roles="Admin, ProjectManager" Context="memberContext">
+            <div class="@(memberContext.User.IsInRole(nameof(Roles.ProjectManager)) ? "col-12" : "col-lg-6")">
+            <label for="members" class="form-label">Company Members:</label>
+            <InputSelect id="members" @bind-Value="assignedMemberId" class="form-control">
+            <option value="">Select a Member</option>
+            @if (companyMembers != null)
+            {
+            @foreach (UserDTO member in companyMembers.Where(cm => cm.Role != nameof(Roles.ProjectManager) && cm.Role != nameof(Roles.DemoUser) && cm.Role != nameof(Roles.Admin)))
+            {
+            @if (member != null)
+            {
+            <option value="@member.Id">@member.FullName @member.Role</option>
+            }
+            }
+            }
+            </InputSelect>
+            <button type="button" class="btn btn-secondary mt-2" @onclick="AssignMember">Add Member</button>
+
+            <button type="button" class="btn btn-danger mt-2" @onclick="RemoveMember">Remove Member</button>
+            </div>
+            </AuthorizeView> *@
+            </div>
+        </div>
+    </div>
+}
+
+
+@code {
+    [Parameter, EditorRequired]
+    public IEnumerable<UserDTO>? projectMembers { get; set; }
+
+    [Parameter, EditorRequired]
+    public IEnumerable<UserDTO>? projectManagers { get; set; }
+
+    [Parameter, EditorRequired]
+    public UserDTO? projectManager { get; set; }
+
+    [Parameter, EditorRequired]
+    public IEnumerable<UserDTO>? companyMembers { get; set; }
+
+    [Parameter]
+    public TicketDTO? Ticket { get; set; }
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    [Parameter, EditorRequired]
+    public EventCallback<TicketDTO?> assignDeveloper { get; set; }
+
+    [Parameter, EditorRequired]
+    public UserInfo? userInfo { get; set; }
+
+    private string? assignedDeveloperId;
+    private string? assignedSubmitterId;
+
+
+    private async Task AssignDeveloper()
+    {
+        if (Ticket is not null)
+        {
+            await assignDeveloper.InvokeAsync(Ticket);
+        }
+
+    }
+}

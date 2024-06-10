@@ -46,11 +46,17 @@ namespace BugTrackerBC.Services
             return projects.Select(p => p.ToDTO()).ToList();
         }
 
-        public async Task ArchiveProjectAsync(int projectId, int companyId)
+        public async Task<IEnumerable<ProjectDTO>> GetMemberProjectsAsync(int companyId, string memberId)
         {
-            await _repository.ArchiveProjectAsync(projectId, companyId);
+            IEnumerable<Project> projects = await _repository.GetMemberProjectsAsync(companyId, memberId);
+            return projects.Select(p =>p.ToDTO()).ToList();
         }
 
+        public async Task<IEnumerable<ProjectDTO>> GetMemberArchivedProjectsAsync(int companyId, string memberId)
+        {
+            IEnumerable<Project> archivedProjects = await _repository.GetMemberArchivedProjectsAsync(companyId, memberId);
+            return archivedProjects.Select(p => p.ToDTO()).ToList();
+        }
 
         public async Task<IEnumerable<ProjectDTO>> GetArchivedProjects(int companyId)
         {
@@ -62,6 +68,10 @@ namespace BugTrackerBC.Services
         {
             Project? project = await _repository.GetProjectByIdAsync(projectId, companyId);
             return project?.ToDTO();
+        }
+        public async Task ArchiveProjectAsync(int projectId, int companyId)
+        {
+            await _repository.ArchiveProjectAsync(projectId, companyId);
         }
 
         public async Task RestoreProjectAsync(int projectId, int companyId)
@@ -132,5 +142,6 @@ namespace BugTrackerBC.Services
         {
            await _repository.RemoveProjectManagerAsync(projectId, adminId);
         }
+
     }
 }

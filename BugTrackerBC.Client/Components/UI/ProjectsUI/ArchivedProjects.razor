@@ -16,7 +16,7 @@
         {
             <tr>
                 <td>@project.Created.ToLocalTime().ToString("d")</td>
-                <td>@project.Name</td>
+                <td><a href="/details-project/@project.Id">@project.Name</a></td>
                 <td>@project.Description</td>
                 <td>@project.Priority</td>
                 <td>@project.Archived</td>

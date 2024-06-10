@@ -78,7 +78,10 @@ namespace BugTrackerBC.Models
                 Status = ticket.Status,
                 ProjectId = ticket.ProjectId,
                 SubmitterUserId = ticket.SubmitterUserId,
-                DeveloperUserId = ticket.DeveloperUserId
+                DeveloperUserId = ticket.DeveloperUserId,
+                DeveloperUser = ticket.DeveloperUser?.ToDTO(),
+                SubmitterUser = ticket.SubmitterUser?.ToDTO(),
+                //Project = ticket.Project?.ToDTO(),
             };
 
             foreach (TicketComment comment in ticket.Comments)

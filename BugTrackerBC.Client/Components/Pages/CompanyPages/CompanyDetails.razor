@@ -23,7 +23,7 @@
 @if (userInfo != null && company != null)
 {
 
-    <AuthorizeView Roles="Admin" Context="authContext">
+    <AuthorizeView Context="authContext">
         <Authorized>
             <div class="row d-flex py-3">
                 <div class="col-md-6 mt-2 d-flex">
@@ -49,7 +49,15 @@
                     {
 
                         <div class="card flex-grow-1 w-100">
-                            <h5 class="card-header fs-3"><b>Edit Member</b></h5>
+                            @if (authContext.User.IsInRole(nameof(Roles.Admin)) && authContext.User.IsInRole(nameof(Roles.ProjectManager)))
+                            {
+                                <h5 class="card-header fs-3 text-center"><b>Edit Member</b></h5>
+
+                            }
+                            else
+                            {
+                                <h5 class="card-header fs-3 text-center"><b>Member Details</b></h5>
+                            }
                             <div class="card-body">
                                 <EditForm Model="selectedMember" OnValidSubmit="HandleUpdate">
                                     <DataAnnotationsValidator />
@@ -60,6 +68,8 @@
                                     </div>
                                     <div class="mb-3 text-center">
                                         <label for="role" class="form-label">Role:</label>
+                                        @if (authContext.User.IsInRole(nameof(Roles.Admin)) && authContext.User.IsInRole(nameof(Roles.ProjectManager)))
+                                        {
                                         <InputSelect id="role" class="form-control" @bind-Value="selectedMember.Role">
                                             @foreach (Roles role in Enum.GetValues(typeof(Roles)))
                                             {
@@ -69,10 +79,16 @@
                                                     //figure out why not showing display name
                                                 }
                                             }
-                                        </InputSelect>
-
+                                            </InputSelect>
+                                        }
+                                        else
+                                        {
+                                            <p>@selectedMember.Role</p>
+                                        }
                                     </div>
                                     <div class="col-12 text-center px-5">
+                                        @if (authContext.User.IsInRole(nameof(Roles.Admin)) && authContext.User.IsInRole(nameof(Roles.ProjectManager)))
+                                        {
                                         <img src="@(string.IsNullOrEmpty(selectedMember.ImageUrl) ? FileHelper.DefaultProfilePicture : selectedMember.ImageUrl)" class="img-fluid previewUpload" />
                                         <InputFile OnChange="OnFileChange" class="form-control mt-2" accept=".png, .jpg, .jpeg, .svg" />
 
@@ -80,10 +96,19 @@
                                             <span class="text-danger">
                                                 @imageError
                                             </span>
-                                        </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <img src="@selectedMember.ImageUrl" class="previewUpload"/>
+                                        }
                                     </div>
                                     <div class="text-center">
-                                        <button type="submit" class="btn btn-primary mt-3">Update Role</button>
+                                        @if (authContext.User.IsInRole(nameof(Roles.Admin)) && authContext.User.IsInRole(nameof(Roles.ProjectManager)))
+                                        {
+                                            <button type="submit" class="btn btn-primary mt-3">Update Role</button>
+                                        }
+                                        
                                     </div>
 
                                 </EditForm>
@@ -113,8 +138,9 @@
                         {
                             @foreach (UserDTO member in companymembers)
                             {
-                                @if (member.Id != userInfo!.UserId)
-                                {
+                                
+                                @* @if (member.Id != userInfo!.UserId)
+                                { *@
                                     <li class="list-group-item list-group-item-action" @onclick="() => SelectMember(member)">
                                         <div class="row d-flex py-2">
                                             <span class="col-md-4 col-lg-2 d-flex text-decoration-none text-dark align-items-center border-rounded">
@@ -129,7 +155,7 @@
 
 
                                     </li>
-                                }
+                                @* } *@
                             }
                         }
                     </ul>

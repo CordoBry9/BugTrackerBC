@@ -136,7 +136,7 @@ namespace BugTrackerBC.Controllers
         }
 
         [HttpPut("{ticketId:int}")]
-        public async Task<ActionResult> UpdateTicket([FromRoute] int ticketId, [FromBody] TicketDTO ticketDTO)
+        public async Task<IActionResult> UpdateTicket([FromRoute] int ticketId, [FromBody] TicketDTO ticketDTO)
         {
             try
             {

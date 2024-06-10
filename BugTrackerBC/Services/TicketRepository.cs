@@ -3,6 +3,7 @@ using BugTrackerBC.Client.Models;
 using BugTrackerBC.Data;
 using BugTrackerBC.Models;
 using BugTrackerBC.Services.Interfaces;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Internal;
@@ -10,32 +11,25 @@ using System.ComponentModel.Design;
 
 namespace BugTrackerBC.Services
 {
-    public class TicketRepository : ITicketRepository
+    public class TicketRepository(IDbContextFactory<ApplicationDbContext> contextFactory, IServiceProvider svcProvider) : ITicketRepository
     {
-
-        private readonly IDbContextFactory<ApplicationDbContext> _dbContextFactory;
-
-        public TicketRepository(IDbContextFactory<ApplicationDbContext> dbContextFactory)
-        {
-            _dbContextFactory = dbContextFactory;
-        }
 
 
         public async Task<Ticket> AddTicketAsync(Ticket ticket, int companyId)
         {
-            using ApplicationDbContext context = _dbContextFactory.CreateDbContext();
+            using ApplicationDbContext context = contextFactory.CreateDbContext();
 
-                    ticket.Created = DateTime.UtcNow;
-                    context.Tickets.Add(ticket);
-                    await context.SaveChangesAsync();
-                    return ticket;
+            ticket.Created = DateTime.UtcNow;
+            context.Tickets.Add(ticket);
+            await context.SaveChangesAsync();
+            return ticket;
 
         }
 
 
         public async Task<IEnumerable<Ticket>> GetAllTicketsAsync(int companyId)
         {
-            using ApplicationDbContext context = _dbContextFactory.CreateDbContext();
+            using ApplicationDbContext context = contextFactory.CreateDbContext();
 
             IEnumerable<Ticket> tickets = await context.Tickets
                                         .Include(t => t.Project)
@@ -44,10 +38,9 @@ namespace BugTrackerBC.Services
 
             return tickets;
         }
-
         public async Task<Ticket?> GetTicketByIdAsync(int ticketId, int companyId)
         {
-            using ApplicationDbContext context = _dbContextFactory.CreateDbContext();
+            using ApplicationDbContext context = contextFactory.CreateDbContext();
 
             Ticket? ticket = await context.Tickets
                 .Include(t => t.SubmitterUser)
@@ -57,14 +50,17 @@ namespace BugTrackerBC.Services
                 .Include(t => t.Attachments)
                     .ThenInclude(a => a.FileUpload)
                 .Include(t => t.Attachments)
-                    .ThenInclude(a => a.User) 
+                    .ThenInclude(a => a.User)
                 .FirstOrDefaultAsync(t => t.Id == ticketId && t.Project!.CompanyId == companyId);
 
             return ticket;
         }
+
+
+
         public async Task ArchiveTicketAsync(int ticketId, int companyId)
         {
-            using ApplicationDbContext context = _dbContextFactory.CreateDbContext();
+            using ApplicationDbContext context = contextFactory.CreateDbContext();
 
             Ticket? ticket = await context.Tickets.Include(t => t.Project).FirstOrDefaultAsync(t => t.Id == ticketId && t.Project!.CompanyId == companyId);
 
@@ -82,7 +78,7 @@ namespace BugTrackerBC.Services
 
         public async Task RestoreTicketAsync(int ticketId, int companyId)
         {
-            using ApplicationDbContext context = _dbContextFactory.CreateDbContext();
+            using ApplicationDbContext context = contextFactory.CreateDbContext();
 
             Ticket? ticket = await context.Tickets.Include(t => t.Project)
                                        .FirstOrDefaultAsync(t => t.Id == ticketId && t.Project!.CompanyId == companyId);
@@ -107,42 +103,28 @@ namespace BugTrackerBC.Services
             };
         }
 
-        public async Task<Ticket> UpdateTicketAsync(Ticket ticket, int companyId, string userId)
+        public async Task UpdateTicketAsync(Ticket ticket, int companyId, string userId)
         {
-            using ApplicationDbContext context = _dbContextFactory.CreateDbContext();
+            using ApplicationDbContext context = contextFactory.CreateDbContext();
 
-            Ticket? existingTicket = await context.Tickets
+            bool shouldUpdate = await context.Tickets
                                               .Include(t => t.Project)
-                                              .Include(t => t.SubmitterUser)
                                               .Include(t => t.DeveloperUser)
-                                              .FirstOrDefaultAsync(t => t.Id == ticket.Id && t.Project!.CompanyId == companyId);
+                                              .Include(t => t.SubmitterUser)
+                                              .AnyAsync(t => t.Id == ticket.Id && t.Project!.CompanyId == companyId);
 
-            if (existingTicket == null)
+            if (shouldUpdate)
             {
-                throw new Exception("Ticket not found in DB");
+                context.Tickets.Update(ticket);
+                await context.SaveChangesAsync();
             }
 
-            // Update the ticket details
-            existingTicket.Title = ticket.Title;
-            existingTicket.Description = ticket.Description;
-            existingTicket.Priority = ticket.Priority;
-            existingTicket.Updated = DateTimeOffset.UtcNow; //have this show on tables when updated
-            existingTicket.Archived = ticket.Archived;
-            existingTicket.ArchivedByProject = ticket.ArchivedByProject;
-            existingTicket.Type = ticket.Type;
-            existingTicket.Status = ticket.Status;
-            existingTicket.SubmitterUserId = ticket.SubmitterUserId;
-            existingTicket.DeveloperUserId = ticket.DeveloperUserId;
 
-            context.Tickets.Update(existingTicket);
-            await context.SaveChangesAsync();
-
-            return existingTicket;
         }
 
         public async Task<IEnumerable<TicketComment>> GetTicketCommentsAsync(int ticketId, int companyId)
         {
-            using ApplicationDbContext context = _dbContextFactory.CreateDbContext();
+            using ApplicationDbContext context = contextFactory.CreateDbContext();
 
             IEnumerable<TicketComment> ticketcomments = await context.TicketComments
                                         .Include(t => t.Ticket)
@@ -155,7 +137,7 @@ namespace BugTrackerBC.Services
 
         public async Task<TicketComment?> GetCommentByIdAsync(int commentId, int companyId)
         {
-            using ApplicationDbContext context = _dbContextFactory.CreateDbContext();
+            using ApplicationDbContext context = contextFactory.CreateDbContext();
 
             TicketComment? ticketcomment = await context.TicketComments
                                         .Include(c => c.User)
@@ -166,7 +148,7 @@ namespace BugTrackerBC.Services
 
         public async Task AddCommentAsync(TicketComment comment, int companyId)
         {
-            using ApplicationDbContext context = _dbContextFactory.CreateDbContext();
+            using ApplicationDbContext context = contextFactory.CreateDbContext();
 
             comment.Created = DateTime.UtcNow;
             context.TicketComments.Add(comment);
@@ -176,7 +158,7 @@ namespace BugTrackerBC.Services
 
         public async Task DeleteCommentAsync(int commentId, int companyId)
         {
-            using ApplicationDbContext context = _dbContextFactory.CreateDbContext();
+            using ApplicationDbContext context = contextFactory.CreateDbContext();
 
             TicketComment? ticketcomment = await context.TicketComments
                                          .Include(c => c.User)
@@ -191,7 +173,7 @@ namespace BugTrackerBC.Services
 
         public async Task UpdateCommentAsync(TicketComment comment, string userId)
         {
-            using ApplicationDbContext context = _dbContextFactory.CreateDbContext();
+            using ApplicationDbContext context = contextFactory.CreateDbContext();
 
             TicketComment? ticketcomment = await context.TicketComments
                                             .Include(c => c.User)
@@ -207,7 +189,7 @@ namespace BugTrackerBC.Services
         }
         public async Task<TicketAttachment> AddTicketAttachment(TicketAttachment attachment, int companyId)
         {
-            using ApplicationDbContext context = _dbContextFactory.CreateDbContext();
+            using ApplicationDbContext context = contextFactory.CreateDbContext();
 
             // make sure the ticket exists and belongs to this company
             var ticket = await context.Tickets
@@ -230,7 +212,7 @@ namespace BugTrackerBC.Services
 
         public async Task DeleteTicketAttachment(int attachmentId, int companyId)
         {
-            using ApplicationDbContext context = _dbContextFactory.CreateDbContext();
+            using ApplicationDbContext context = contextFactory.CreateDbContext();
 
             var attachment = await context.TicketAttachments
                 .Include(a => a.FileUpload)
@@ -242,6 +224,74 @@ namespace BugTrackerBC.Services
                 context.Remove(attachment.FileUpload!);
                 await context.SaveChangesAsync();
             }
+        }
+
+        public async Task<IEnumerable<Ticket>> GetMemberTicketsAsync(int companyId, string userId)
+        {
+            using ApplicationDbContext context = contextFactory.CreateDbContext();
+
+            using IServiceScope scope = svcProvider.CreateScope();
+            UserManager<ApplicationUser> userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+            IEnumerable<Ticket> tickets = [];
+
+            ApplicationUser? user = await userManager.FindByIdAsync(userId);
+            if (user == null) return tickets;
+
+            bool isPM = user is not null && await userManager.IsInRoleAsync(user, nameof(Roles.ProjectManager));
+
+            if (isPM)
+            {
+                tickets = await context.Tickets
+                        .Where(t => t.Project!.CompanyId == companyId && t.Archived == false && t.Project.Members.Any(m => m.Id == userId) || t.SubmitterUserId == userId)
+                        .Include(t => t.Project)
+                        .Include(t => t.Comments)
+                        .Include(t => t.SubmitterUser)
+                        .Include(t => t.DeveloperUser)
+                        .OrderByDescending(t => t.Created)
+                        .ToListAsync();
+
+                return tickets;
+            }
+
+            bool isDev = user is not null && await userManager.IsInRoleAsync(user, nameof(Roles.Developer));
+
+            if (isDev)
+            {
+
+                tickets = await context.Tickets
+                       .Where(t => t.Project!.CompanyId == companyId && t.Archived == false && t.SubmitterUserId == userId || t.DeveloperUserId == userId)
+                       .Include(t => t.Project)
+                       .Include(t => t.Comments)
+                       .Include(t => t.SubmitterUser)
+                       .Include(t => t.DeveloperUser)
+                       .OrderByDescending(t => t.Created)
+                       .ToListAsync();
+
+                return tickets;
+
+            }
+
+
+            bool isSubmitter = user is not null && await userManager.IsInRoleAsync(user, nameof(Roles.Submitter));
+
+            if (isDev)
+            {
+
+                tickets = await context.Tickets
+                       .Where(t => t.Project!.CompanyId == companyId && t.Archived == false && t.SubmitterUserId == userId)
+                       .Include(t => t.Project)
+                       .Include(t => t.Comments)
+                       .Include(t => t.SubmitterUser)
+                       .Include(t => t.DeveloperUser)
+                       .OrderByDescending(t => t.Created)
+                       .ToListAsync();
+
+                return tickets;
+
+            }
+
+            return tickets;
         }
     }
 }

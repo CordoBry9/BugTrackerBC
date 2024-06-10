@@ -1,20 +1,20 @@
-﻿@page "/all-projects"
+﻿@page "/my-projects"
 @using BugTrackerBC.Client.Components.UI.ProjectsUI
 @using BugTrackerBC.Client.Models
 @using BugTrackerBC.Client.Services.Interfaces
 @using Microsoft.AspNetCore.Authorization
 @inject IProjectDTOService ProjectDTOService
 @inject NavigationManager Nav
-@rendermode InteractiveAuto
+@rendermode InteractiveServer
 @attribute [Authorize]
 
-@if(userInfo == null)
+@if (userInfo == null)
 {
     <h1>Please Log In</h1>
 }
 @if (archivedView == false)
 {
-    <AuthorizeView>
+    <AuthorizeView Roles="ProjectManager, Submitter, Developer">
         <Authorized>
             <div class="row d-flex text-center justify-content-center">
                 <h1 class="text-center col-12">Projects</h1>
@@ -55,7 +55,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (ProjectDTO project in projects.Where(p => !p.Archived).OrderByDescending(p => p.Created))
+                            @foreach (ProjectDTO project in archivedProjects.OrderByDescending(p => p.Created))
                             {
                                 <ProjectTableRows Project="project" OnArchive="HandleArchive" OnRestore="HandleRestore" />
                             }
@@ -128,10 +128,10 @@ else
     {
 
         userInfo = await UserInfoHelper.GetUserInfoAsync(AuthStateTask);
-        if(userInfo is not null)
+        if (userInfo is not null)
         {
-            projects = (await ProjectDTOService.GetAllProjectsAsync(userInfo!.CompanyId)).ToList();
-            archivedProjects = (await ProjectDTOService.GetArchivedProjects(userInfo!.CompanyId)).ToList();
+            projects = (await ProjectDTOService.GetMemberProjectsAsync(userInfo.CompanyId, userInfo.UserId)).ToList();
+            archivedProjects = (await ProjectDTOService.GetMemberArchivedProjectsAsync(userInfo!.CompanyId, userInfo.UserId)).ToList();
         }
         else
         {
@@ -145,7 +145,7 @@ else
         try
         {
             await ProjectDTOService.AddProjectAsync(newProject!, userInfo!.CompanyId);
-            projects = (await ProjectDTOService.GetAllProjectsAsync(userInfo!.CompanyId)).ToList();
+            projects = (await ProjectDTOService.GetMemberProjectsAsync(userInfo.CompanyId, userInfo.UserId)).ToList();
             newProject = new ProjectDTO()
                 {
                     StartDate = DateTime.Today,
@@ -162,9 +162,13 @@ else
     {
         try
         {
-            await ProjectDTOService.RestoreProjectAsync(projectId, userInfo!.CompanyId);
-            projects = (await ProjectDTOService.GetAllProjectsAsync(userInfo!.CompanyId)).ToList();
-            archivedProjects = (await ProjectDTOService.GetArchivedProjects(userInfo!.CompanyId)).ToList();
+            if (userInfo is not null)
+            {
+                await ProjectDTOService.RestoreProjectAsync(projectId, userInfo.CompanyId);
+                projects = (await ProjectDTOService.GetMemberProjectsAsync(userInfo.CompanyId, userInfo.UserId)).ToList();
+                archivedProjects = (await ProjectDTOService.GetMemberArchivedProjectsAsync(userInfo!.CompanyId, userInfo.UserId)).ToList();
+
+            }
         }
         catch (Exception ex)
         {
@@ -177,8 +181,8 @@ else
         try
         {
             await ProjectDTOService.ArchiveProjectAsync(projectId, userInfo!.CompanyId);
-            projects = (await ProjectDTOService.GetAllProjectsAsync(userInfo!.CompanyId)).ToList();
-            archivedProjects = (await ProjectDTOService.GetArchivedProjects(userInfo!.CompanyId)).ToList();
+            projects = (await ProjectDTOService.GetMemberProjectsAsync(userInfo.CompanyId, userInfo.UserId)).ToList();
+            archivedProjects = (await ProjectDTOService.GetMemberArchivedProjectsAsync(userInfo!.CompanyId, userInfo.UserId)).ToList();
         }
         catch (Exception ex)
         {

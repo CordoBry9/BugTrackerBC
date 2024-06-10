@@ -13,7 +13,8 @@
 {
     <div class="container mt-3">
         <div class="row g-4 border p-3">
-            <div class="col-md-6">
+            <AuthorizeView>
+                <div class="@(context.User.IsInRole(nameof(Roles.Developer)) || context.User.IsInRole(nameof(Roles.Submitter))  ? "col-12" : "col-md-6")">
                 <div class="card h-100">
                     <div class="card-header">
                         <h4>@project.Name</h4>
@@ -22,6 +23,7 @@
                         <p class="card-text"><strong>Assigned:</strong> @project.StartDate.ToString("d")</p>
                         <p class="card-text"><strong>Deadline:</strong> @project.EndDate.ToString("d")</p>
                         <p class="card-text"><strong>Priority:</strong> @project.Priority</p>
+                        <p class="card-text"><strong>Archived:</strong> @project.Archived</p> @* find way to show as yes or no *@
                         <p class="card-text">
                             <strong>Project Manager:&nbsp;</strong>
 
@@ -36,11 +38,25 @@
                             </p>
                         <p class="card-text"><strong>Description:</strong> @project.Description</p>
                         <hr />
+                        <div class="row d-flex vstack">
+                            <div class="vstack flex-grow-0" style="width: 300px;">
+                            @if (project.Archived == false)
+                            {
+                                <button class="btn btn-danger mt-3" @onclick="HandleArchive">Archive?</button>
+                            }
+                            @if (project.Archived == true)
+                            {
+                                <button class="btn btn-success mt-3" @onclick="HandleRestore">Restore?</button>
+                            }
+                            <a href="/projects" class="btn btn-primary mt-3">Back to Projects View</a>
 
-                        <a href="/projects" class="btn btn-primary mt-3">Back to Projects View</a>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
+            </AuthorizeView>
             <div class="col-md-6">
                 <AuthorizeView Roles="Admin, ProjectManager">
                     <AssignProjectManagers projectManagers="projectManagers" userInfo="userInfo" 
@@ -103,8 +119,7 @@
                 <table class="table table-striped">
                     <thead>
                         <tr>
-                            <th scope="col">Project</th>
-                            <th scope="col">Developer</th>
+                            <th scope="col">Title</th>
                             <th scope="col">Created</th>
                             <th scope="col">Description</th>
                         </tr>
@@ -117,7 +132,7 @@
                                 {
                                     <td>@ticket.Project.Name</td>
                                 }
-                                <td>@ticket.DeveloperUser</td>
+                                <td><a href="/details-ticket/@ticket.Id">@ticket.Title</a></td>
                                 <td>@ticket.Created.ToString("g")</td>
                                 <td>@ticket.Description</td>
                             </tr>
@@ -197,6 +212,36 @@
             await ProjectDTOService.RemoveProjectManagerAsync(projectId, userInfo.UserId);
             projectMembers = await ProjectDTOService.GetProjectMembersAsync(projectId, userInfo.CompanyId);
             projectManager = await ProjectDTOService.GetProjectManagerAsync(projectId, userInfo.CompanyId);
+        }
+    }
+
+    private async Task HandleRestore()
+    {
+        try
+        {
+            if (userInfo is not null)
+            {
+                await ProjectDTOService.RestoreProjectAsync(projectId, userInfo.CompanyId);
+                project = await ProjectDTOService.GetProjectByIdAsync(projectId, userInfo.CompanyId);
+
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
+    }
+
+    private async Task HandleArchive()
+    {
+        try
+        {
+            await ProjectDTOService.ArchiveProjectAsync(projectId, userInfo!.CompanyId);
+            project = await ProjectDTOService.GetProjectByIdAsync(projectId, userInfo.CompanyId);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
         }
     }
 }
