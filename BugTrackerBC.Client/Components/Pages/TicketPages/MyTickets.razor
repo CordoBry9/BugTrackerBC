@@ -1,0 +1,210 @@
+﻿@page "/my-tickets"
+@using BugTrackerBC.Client.Components.UI.ProjectsUI
+@using BugTrackerBC.Client.Components.UI.TicketsUI
+@using BugTrackerBC.Client.Models
+@using BugTrackerBC.Client.Services.Interfaces
+@using Microsoft.AspNetCore.Authorization
+@inject ITicketDTOService TicketDTOService
+@inject IProjectDTOService ProjectDTOService
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+@attribute [Authorize]
+
+@if (archivedView == false)
+{
+    <AuthorizeView>
+        <Authorized>
+            <div class="row d-flex text-center justify-content-center">
+                <h1 class="text-center col-12">Tickets</h1>
+                <div class="col-6 text-center">
+                    <button class="btn btn-primary mt-2" type="button" data-bs-toggle="collapse" data-bs-target="#ticketForm" aria-expanded="false" aria-controls="ticketForm">
+                        Create a Ticket
+                    </button>
+                    <div class="collapse mt-3 justify-content-center" id="ticketForm">
+                        <div class="card card-body mx-auto" style="width: 50%;">
+                            <TicketForm newTicket="newTicket" projects="projects" userInfo="userInfo" OnSubmit="HandleSubmit" />
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center col-6">
+                    <button class="btn btn-primary mt-2" @onclick="ToggleArchivedView">
+                        Archived Tickets
+                    </button>
+                </div>
+            </div>
+
+            <div class="mt-3">
+                @if (tickets == null)
+                {
+                    <p><em>Loading...</em></p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover table-bordered border-primary">
+                            <thead class="text-center">
+                                <tr>
+                                    <th>Created</th>
+                                    <th>Title</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
+                                    <th>Type</th>
+                                    <th>Edit/Archive</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-center align-items-center">
+                                @foreach (TicketDTO ticket in tickets.Where(p => !p.Archived).OrderByDescending(p => p.Created))
+                                {
+
+                                    <TicketTableRows Ticket="@ticket" OnArchive="HandleArchive" OnRestore="HandleRestore"></TicketTableRows>
+                                }
+                            </tbody>
+                        </table>
+
+                    </div>
+                }
+            </div>
+        </Authorized>
+        <NotAuthorized>
+            <h1>Access Denied</h1>
+            <p>You are not authorized to view this page. Please log in to continue.</p>
+        </NotAuthorized>
+    </AuthorizeView>
+}
+else
+{
+    <AuthorizeView>
+        <Authorized>
+            <div class="row d-flex text-center justify-content-center">
+                <h1 class="text-center col-12">Tickets</h1>
+                <div class="text-center col-6">
+                    <button class="btn btn-primary mt-2" @onclick="ToggleArchivedView">
+                        Active Tickets
+                    </button>
+                </div>
+            </div>
+
+            <div class="mt-3">
+                @if (projects == null)
+                {
+                    <p><em>Loading...</em></p>
+                }
+                else
+                {
+
+                    <div class="table-responsive">
+                        <table class="table table-hover table-bordered border-primary">
+                            <thead class="text-center">
+                                <tr>
+                                    <th>Created</th>
+                                    <th>Title</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
+                                    <th>Type</th>
+                                    <th>Edit/Archive</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-center align-items-center">
+                                @foreach (TicketDTO ticket in tickets.Where(p => p.Archived).OrderByDescending(p => p.Created))
+                                {
+
+                                    <TicketTableRows Ticket="@ticket" OnArchive="HandleArchive" OnRestore="HandleRestore"></TicketTableRows>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </Authorized>
+        <NotAuthorized>
+            <h1>Access Denied</h1>
+            <p>You are not authorized to view this page. Please log in to continue.</p>
+        </NotAuthorized>
+    </AuthorizeView>
+}
+
+@code {
+    #region states
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    [Parameter]
+    public TicketDTO? Ticket { get; set; }
+
+    [Parameter]
+    public ProjectDTO? Project { get; set; }
+
+    #endregion
+
+    #region fields
+    private List<TicketDTO> tickets = new List<TicketDTO>();
+    private UserInfo? userInfo;
+    private TicketDTO? newTicket = new TicketDTO();
+    private bool archivedView;
+    private List<TicketDTO> archivedTickets = new List<TicketDTO>();
+    private List<ProjectDTO> projects = new List<ProjectDTO>();
+    private List<ProjectDTO> archivedProjects = new List<ProjectDTO>();
+    #endregion
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        userInfo = await UserInfoHelper.GetUserInfoAsync(AuthStateTask);
+
+        newTicket!.SubmitterUserId = userInfo!.UserId;
+        projects = (await ProjectDTOService.GetMemberProjectsAsync(userInfo!.CompanyId, userInfo.UserId)).ToList();
+        archivedProjects = (await ProjectDTOService.GetMemberArchivedProjectsAsync(userInfo!.CompanyId, userInfo.UserId)).ToList();
+        tickets = (await TicketDTOService.GetMemberTicketsAsync(userInfo!.CompanyId, userInfo!.UserId)).ToList();
+    }
+
+    private async Task HandleSubmit()
+    {
+        try
+        {
+            newTicket!.SubmitterUserId = userInfo!.UserId;
+            await TicketDTOService.AddTicketAsync(newTicket!, userInfo!.CompanyId);
+            tickets = (await TicketDTOService.GetMemberTicketsAsync(userInfo!.CompanyId, userInfo!.UserId)).ToList();
+            newTicket = new TicketDTO()
+                {
+                    SubmitterUserId = userInfo.UserId,
+                };
+            // Reset the form
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
+    }
+
+    private async Task HandleRestore(int ticketId)
+    {
+        try
+        {
+            await TicketDTOService.RestoreTicketAsync(ticketId, userInfo!.CompanyId);
+            tickets = (await TicketDTOService.GetMemberTicketsAsync(userInfo!.CompanyId, userInfo!.UserId)).ToList();
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
+    }
+
+    private async Task HandleArchive(int ticketId)
+    {
+        try
+        {
+            await TicketDTOService.ArchiveTicketAsync(ticketId, userInfo!.CompanyId);
+            tickets = (await TicketDTOService.GetMemberTicketsAsync(userInfo!.CompanyId, userInfo!.UserId)).ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
+    }
+
+    private void ToggleArchivedView()
+    {
+        archivedView = !archivedView;
+    }
+}

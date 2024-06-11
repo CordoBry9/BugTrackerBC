@@ -11,5 +11,27 @@
     height: 10rem;
     width: 10rem;
     border-radius: 50%;
-    object-position: left;
+    object-fit: cover;
+}
+
+.employee-img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+}
+
+@media (min-width: 768px) {
+    .employee-img {
+        width: 100px;
+        height: 100px;
+        object-fit: cover;
+    }
+}
+
+@media (min-width: 992px) {
+    .employee-img {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+    }
 }

@@ -63,7 +63,7 @@ namespace BugTrackerBC.Services
         public async Task<IEnumerable<Project>> GetArchivedProjectsAsync(int companyId)
         {
             using ApplicationDbContext context = contextFactory.CreateDbContext();
-            IEnumerable<Project> archivedprojects = await context.Projects.Where(p => p.CompanyId == companyId && p.Archived)
+            IEnumerable<Project> archivedprojects = await context.Projects.Where(p => p.CompanyId == companyId && p.Archived == true)
                                  .ToListAsync();
 
             return archivedprojects;
@@ -177,7 +177,7 @@ namespace BugTrackerBC.Services
             using ApplicationDbContext context = contextFactory.CreateDbContext();
 
             IEnumerable<Project> projects = await context.Projects
-                .Where(p => p.CompanyId == companyId && p.Members.Any(m => m.Id == memberId))
+                .Where(p => p.CompanyId == companyId && p.Archived == false && p.Members.Any(m => m.Id == memberId))
                 .Include(p => p.Tickets)
                 .Include(p => p.Members).ToListAsync();
 

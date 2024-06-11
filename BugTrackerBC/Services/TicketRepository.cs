@@ -275,7 +275,7 @@ namespace BugTrackerBC.Services
 
             bool isSubmitter = user is not null && await userManager.IsInRoleAsync(user, nameof(Roles.Submitter));
 
-            if (isDev)
+            if (isSubmitter)
             {
 
                 tickets = await context.Tickets

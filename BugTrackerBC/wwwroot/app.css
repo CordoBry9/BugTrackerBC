@@ -1,8 +1,8 @@
-.table-bordered th,
+/*.table-bordered th,
 .table-bordered td {
     border: 1px solid #dee2e6;
 }
-
+*/
 .img-rounded-left {
     border-top-left-radius: 0.25rem;
     border-bottom-left-radius: 0.25rem;

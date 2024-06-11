@@ -3,64 +3,74 @@
 @inject IProjectDTOService ProjectService
 @inject NavigationManager Navigation
 @attribute [Authorize]
-@rendermode InteractiveAuto
 
 
 @if (newTicket != null)
 {
-    <EditForm Model="newTicket" OnValidSubmit="HandleSubmit">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
+    <AuthorizeView Context="createTicket">
 
-        <div class="mb-3">
-            <label for="name" class="form-label">Name</label>
-            <InputText id="name" class="form-control" @bind-Value="newTicket.Title" />
-        </div>
+        <EditForm Model="newTicket" OnValidSubmit="HandleSubmit">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
 
-        <div class="mb-3">
-            <label for="description" class="form-label">Description</label>
-            <InputTextArea id="description" class="form-control" @bind-Value="newTicket.Description" />
-        </div>
+            <div class="mb-3">
+                <label for="name" class="form-label">Name</label>
+                <InputText id="name" class="form-control" @bind-Value="newTicket.Title" />
+            </div>
 
-        <div class="mb-3">
-            <label for="priority" class="form-label">Priority</label>
-            <InputSelect id="priority" class="form-control" @bind-Value="newTicket.Priority">
-                @foreach (TicketPriority priority in Enum.GetValues(typeof(TicketPriority)))
-                {
-                    <option value="@priority">@priority.GetDisplayName()</option>
-                }
-            </InputSelect>
-        </div>
-        <div class="mb-3">
-            <label for="type" class="form-label">Type</label>
-            <InputSelect id="type" class="form-control" @bind-Value="newTicket.Type">
+            <div class="mb-3">
+                <label for="description" class="form-label">Description</label>
+                <InputTextArea id="description" class="form-control" @bind-Value="newTicket.Description" />
+            </div>
+
+            <div class="mb-3">
+                <label for="priority" class="form-label">Priority</label>
+                <InputSelect id="priority" class="form-control" @bind-Value="newTicket.Priority">
+                    <option value="#">Select Priority</option>
+                    @foreach (TicketPriority priority in Enum.GetValues(typeof(TicketPriority)))
+                    {
+                        <option value="@priority">@priority.GetDisplayName()</option>
+                    }
+                </InputSelect>
+            </div>
+            <div class="mb-3">
+                <label for="type" class="form-label">Type</label>
+                <InputSelect id="type" class="form-control" @bind-Value="newTicket.Type">
+                    <option value="#">Ticket Type</option>
                     @foreach (TicketType type in Enum.GetValues(typeof(TicketType)))
                     {
                         <option value="@type">@type.GetDisplayName()</option>
                     }
-            </InputSelect>
-        </div>
-        <div class="mb-3">
-            <label for="project" class="form-label">Project</label>
-            <InputSelect id="project" class="form-control" @bind-Value="newTicket.ProjectId">
-                @if(projects != null)
-                {
-                    @foreach (ProjectDTO project in projects)
-                    {
-                        <option value="@project.Id">@project.Name</option>
-                    }
-                }
-            
-            </InputSelect>
-        </div>
+                </InputSelect>
+            </div>
+            @*             @if(createTicket.User.IsInRole(nameof(Roles.ProjectManager)) || createTicket.User.IsInRole(nameof(Roles.Admin)))
+        { *@
 
-        <button type="submit" class="btn btn-primary">Create</button>
-    </EditForm>
+            <div class="mb-3">
+                <label for="project" class="form-label">Project</label>
+                <InputSelect id="project" class="form-control" @bind-Value="newTicket.ProjectId">
+                    <option value="#">Select a project</option>
+                    @if (projects != null)
+                    {
+                        @foreach (ProjectDTO project in projects)
+                        {
+                            <option value="@project.Id">@project.Name</option>
+                        }
+                    }
+
+                </InputSelect>
+            </div>
+            @*  } *@
+
+            <button type="submit" class="btn btn-primary">Create</button>
+        </EditForm>
+
+    </AuthorizeView>
 }
 
 
 @code {
-    [Parameter]
+    [Parameter, EditorRequired]
 
     public TicketDTO? newTicket { get; set; }
 

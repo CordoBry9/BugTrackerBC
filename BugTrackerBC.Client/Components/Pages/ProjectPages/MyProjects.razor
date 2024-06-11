@@ -55,7 +55,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (ProjectDTO project in archivedProjects.OrderByDescending(p => p.Created))
+                            @foreach (ProjectDTO project in projects.OrderByDescending(p => p.Created))
                             {
                                 <ProjectTableRows Project="project" OnArchive="HandleArchive" OnRestore="HandleRestore" />
                             }

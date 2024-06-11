@@ -124,5 +124,9 @@ namespace BugTrackerBC.Client.Services
             res.EnsureSuccessStatusCode();
         }
 
+        public Task<IEnumerable<TicketDTO>> GetMemberTicketsAsync(int companyId, string userId)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
