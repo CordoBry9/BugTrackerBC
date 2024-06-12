@@ -9,7 +9,7 @@ namespace BugTrackerBC.Client.Services.Interfaces
         Task<IEnumerable<ProjectDTO>> GetMemberProjectsAsync(int companyId, string memberId);
         Task<IEnumerable<ProjectDTO>> GetMemberArchivedProjectsAsync(int companyId, string memberId);
         Task<ProjectDTO?> GetProjectByIdAsync(int projectId, int companyId);
-        Task<ProjectDTO> AddProjectAsync(ProjectDTO projectDTO, int companyId);
+        Task<ProjectDTO> AddProjectAsync(ProjectDTO projectDTO, int companyId, string userId);
         Task UpdateProjectAsync(ProjectDTO projectDTO, int companyId);
         Task ArchiveProjectAsync(int projectId, int companyId);
         Task RestoreProjectAsync(int projectId, int companyId);

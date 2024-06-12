@@ -1,12 +1,13 @@
-﻿
-
-<div class="@cssClass p-2 border border-1 border-dark rounded-3">
-    <h4>
-        @Title
-    </h4>
-    <p>@DisplayMessage</p>
-
+﻿<div class="alert d-flex alert-danger" role="alert">
+    <i class="bx bx-block lead me-3"></i>
+    <div>
+            <h4>
+                @Title
+            </h4>
+            <p>@DisplayMessage</p>
+    </div>
 </div>
+
 
 @code {
     [Parameter, EditorRequired]
@@ -14,7 +15,7 @@
 
 
     [Parameter, EditorRequired]
-    public string DisplayMessage { get; set; } = "Message Goes Here";  
+    public string DisplayMessage { get; set; } = "Message Goes Here";
 
     [Parameter]
     public string cssClass { get; set; } = "alert-primary";

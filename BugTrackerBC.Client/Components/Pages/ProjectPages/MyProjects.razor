@@ -5,7 +5,7 @@
 @using Microsoft.AspNetCore.Authorization
 @inject IProjectDTOService ProjectDTOService
 @inject NavigationManager Nav
-@rendermode InteractiveServer
+@rendermode InteractiveWebAssembly
 @attribute [Authorize]
 
 @if (userInfo == null)
@@ -42,25 +42,26 @@
                 }
                 else
                 {
-                    <table class="table table-striped table-bordered mt-3">
-                        <thead>
-                            <tr>
-                                <th>Created</th>
-                                <th>Name</th>
-                                <th>Description</th>
-                                <th>Priority</th>
-                                <th>Status</th>
-                                <th>Start Date</th>
-                                <th>End Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (ProjectDTO project in projects.OrderByDescending(p => p.Created))
-                            {
-                                <ProjectTableRows Project="project" OnArchive="HandleArchive" OnRestore="HandleRestore" />
-                            }
-                        </tbody>
-                    </table>
+                    <div class="table-responsive">
+                        <table class="table table-hover table-bordered border-primary">
+                            <thead class="text-center">
+                                <tr>
+                                    <th>Created</th>
+                                    <th>Name</th>
+                                    <th>Priority</th>
+                                    <th>Start Date</th>
+                                    <th>End Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (ProjectDTO project in projects.OrderByDescending(p => p.Created))
+                                {
+                                    <ProjectTableRows Project="project" OnArchive="HandleArchive" OnRestore="HandleRestore" />
+                                }
+                            </tbody>
+                        </table>
+                    </div>
                 }
             </div>
         </Authorized>
@@ -144,7 +145,7 @@ else
     {
         try
         {
-            await ProjectDTOService.AddProjectAsync(newProject!, userInfo!.CompanyId);
+            await ProjectDTOService.AddProjectAsync(newProject!, userInfo!.CompanyId, userInfo!.UserId);
             projects = (await ProjectDTOService.GetMemberProjectsAsync(userInfo.CompanyId, userInfo.UserId)).ToList();
             newProject = new ProjectDTO()
                 {

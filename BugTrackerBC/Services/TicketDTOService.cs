@@ -86,6 +86,8 @@ namespace BugTrackerBC.Services
                 updatedTicket.SubmitterUserId = ticketDTO.SubmitterUserId;
                 updatedTicket.DeveloperUserId = ticketDTO.DeveloperUserId;
                 updatedTicket.DeveloperUser = null;
+                updatedTicket.SubmitterUser = null;
+                updatedTicket.Project = null;
 
                 await _repository.UpdateTicketAsync(updatedTicket, companyId, userId);
 

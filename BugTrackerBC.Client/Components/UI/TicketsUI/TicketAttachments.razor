@@ -1,4 +1,5 @@
-﻿@using BugTrackerBC.Client.Services.Interfaces
+﻿@using BugTrackerBC.Client.Helpers
+@using BugTrackerBC.Client.Services.Interfaces
 @inject ITicketDTOService TicketService
 
 <EditForm Model="newAttachment" OnSubmit="HandleSubmit" class="vstack p-3 gap-3">
@@ -22,6 +23,8 @@
     [Parameter]
     public EventCallback OnChange { get; set; }
 
+    string? errorMessage;
+
     protected override async Task OnInitializedAsync()
     {
         // get the current user's information
@@ -37,8 +40,15 @@
     {
         if (newFile is not null)
         {
+            errorMessage = string.Empty;
+
+            if(newFile.Size > FileHelper.MaxFileSize)
+            {
+                errorMessage = "file exceeded maximum size limit";
+            }
+
             // get the byte[] and ContentType from the selected file
-            using var stream = newFile.OpenReadStream();
+            using var stream = newFile.OpenReadStream(FileHelper.MaxFileSize);
             using var ms = new MemoryStream();
             await stream.CopyToAsync(ms);
 

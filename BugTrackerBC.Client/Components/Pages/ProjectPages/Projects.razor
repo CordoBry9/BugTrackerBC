@@ -18,6 +18,8 @@
         <Authorized>
             <div class="row d-flex text-center justify-content-center">
                 <h1 class="text-center col-12">Projects</h1>
+                @if (context.User.IsInRole(nameof(Roles.Admin)) || context.User.IsInRole(nameof(Roles.ProjectManager)))
+                {
                 <div class="col-6 text-center">
                     <button class="btn btn-primary mt-2" type="button" data-bs-toggle="collapse" data-bs-target="#ticketForm" aria-expanded="false" aria-controls="projectForm">
                         Create a Ticket
@@ -28,6 +30,8 @@
                         </div>
                     </div>
                 </div>
+
+                }
                 <div class="text-center col-6">
                     <button class="btn btn-primary mt-2" @onclick="ToggleArchivedView">
                         Archived View
@@ -144,7 +148,7 @@ else
     {
         try
         {
-            await ProjectDTOService.AddProjectAsync(newProject!, userInfo!.CompanyId);
+            await ProjectDTOService.AddProjectAsync(newProject!, userInfo!.CompanyId, userInfo!.UserId);
             projects = (await ProjectDTOService.GetAllProjectsAsync(userInfo!.CompanyId)).ToList();
             newProject = new ProjectDTO()
                 {

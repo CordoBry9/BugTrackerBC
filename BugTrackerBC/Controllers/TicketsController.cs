@@ -62,6 +62,25 @@ namespace BugTrackerBC.Controllers
             }
         }
 
+        [HttpGet("member/{userId}/tickets")]
+        public async Task<ActionResult<IEnumerable<TicketDTO>>> GetMemberTickets([FromRoute] string userId)
+        {
+            try
+            {
+                if (_companyId != null)
+                {
+                    IEnumerable<TicketDTO> tickets = await _ticketService.GetMemberTicketsAsync(_companyId.Value, userId);
+                    return Ok(tickets);
+                }
+                return BadRequest();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return Problem();
+            }
+        }
+
         [HttpPut("{ticketId:int}/archive")]
         public async Task<ActionResult> ArchiveTicket([FromRoute] int ticketId)
         {
@@ -84,7 +103,7 @@ namespace BugTrackerBC.Controllers
             }
         }
 
-        [HttpGet("{ticketId}")]
+        [HttpGet("{ticketId:int}")]
         public async Task<ActionResult<TicketDTO?>> GetTicketById([FromRoute] int ticketId)
         {
             try
@@ -325,5 +344,6 @@ namespace BugTrackerBC.Controllers
 
             return NoContent();
         }
+
     }
 }

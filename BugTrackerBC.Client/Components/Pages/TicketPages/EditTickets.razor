@@ -19,48 +19,54 @@ else
         <DataAnnotationsValidator />
         <ValidationSummary />
 
-        <div class="mb-3">
-            <label for="name" class="form-label">Name</label>
-            <InputText id="name" class="form-control" @bind-Value="ticket.Title" />
+        <!-- Floating label: Title -->
+        <div class="form-floating mb-4">
+            <InputText id="title" class="form-control" @bind-Value="ticket.Title" placeholder="Title" />
+            <label for="title">Title</label>
         </div>
 
-        <div class="mb-3">
-            <label for="description" class="form-label">Description</label>
-            <InputTextArea id="description" class="form-control" @bind-Value="ticket.Description" />
+        <!-- Floating label: Description -->
+        <div class="form-floating mb-4">
+            <InputTextArea id="description" class="form-control" @bind-Value="ticket.Description" style="height: 8rem;" placeholder="Description" />
+            <label for="description">Description</label>
         </div>
 
-        <div class="mb-3">
-            <label for="priority" class="form-label">Priority</label>
-            <InputSelect id="priority" class="form-control" @bind-Value="ticket.Priority">
+        <!-- Floating label: Priority -->
+        <div class="form-floating mb-4">
+            <InputSelect id="priority" class="form-select" @bind-Value="ticket.Priority">
                 @foreach (TicketPriority priority in Enum.GetValues(typeof(TicketPriority)))
                 {
                     <option value="@priority">@priority.GetDisplayName()</option>
                 }
             </InputSelect>
+            <label for="priority">Priority</label>
         </div>
 
-        <div class="mb-3">
-            <label for="type" class="form-label">Type</label>
-            <InputSelect id="type" class="form-control" @bind-Value="ticket.Type">
-                    @foreach (TicketType type in Enum.GetValues(typeof(TicketType)))
-                    {
-                        <option value="@type">@type.GetDisplayName()</option>
-                    }
+        <!-- Floating label: Type -->
+        <div class="form-floating mb-4">
+            <InputSelect id="type" class="form-select" @bind-Value="ticket.Type">
+                @foreach (TicketType type in Enum.GetValues(typeof(TicketType)))
+                {
+                    <option value="@type">@type.GetDisplayName()</option>
+                }
             </InputSelect>
+            <label for="type">Type</label>
         </div>
 
-        <div class="mb-3">
-            <label for="status" class="form-label">Type</label>
-            <InputSelect id="status" class="form-control" @bind-Value="ticket.Status">
+        <!-- Floating label: Status -->
+        <div class="form-floating mb-4">
+            <InputSelect id="status" class="form-select" @bind-Value="ticket.Status">
                 @foreach (TicketStatus status in Enum.GetValues(typeof(TicketStatus)))
                 {
                     <option value="@status">@status.GetDisplayName()</option>
                 }
             </InputSelect>
+            <label for="status">Status</label>
         </div>
 
         <button type="submit" class="btn btn-primary">Save</button>
     </EditForm>
+
 }
 
 @code {
@@ -74,11 +80,13 @@ else
     private List<ProjectDTO> projects = new List<ProjectDTO>();
     private TicketDTO? ticket;
     private UserInfo? userInfo;
+    private UserDTO? activeuser;
     protected override async Task OnInitializedAsync()
     {
         userInfo = await UserInfoHelper.GetUserInfoAsync(AuthStateTask);
         projects = (await ProjectDTOService.GetAllProjectsAsync(userInfo!.CompanyId)).ToList();
         ticket = await TicketDTOService.GetTicketByIdAsync(ticketId, userInfo!.CompanyId);
+        // activeuser = await 
     }
 
     private async Task HandleValidSubmit()
@@ -88,7 +96,19 @@ else
             if (ticket != null)
             {
                 await TicketDTOService.UpdateTicketAsync(ticket, userInfo!.CompanyId, userInfo!.UserId);
-                Navigation.NavigateTo("/tickets");
+                foreach (Roles role in Enum.GetValues(typeof(Roles)))
+                {
+                    if (userInfo.Roles.Contains(nameof(Roles.Admin)))
+                    {
+
+                        Navigation.NavigateTo("/all-tickets");
+                    }
+                    else
+                    {
+                        Navigation.NavigateTo("/my-tickets");
+                    }
+                }
+                
             }
         }
         catch (Exception ex)

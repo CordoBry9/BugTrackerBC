@@ -7,7 +7,7 @@
 @inject ITicketDTOService TicketDTOService
 @inject IProjectDTOService ProjectDTOService
 @inject NavigationManager Nav
-@rendermode InteractiveServer
+@rendermode InteractiveWebAssembly
 @attribute [Authorize]
 
 @if (archivedView == false)
@@ -105,7 +105,7 @@ else
                                 </tr>
                             </thead>
                             <tbody class="text-center align-items-center">
-                                @foreach (TicketDTO ticket in tickets.Where(p => p.Archived).OrderByDescending(p => p.Created))
+                                @foreach (TicketDTO ticket in tickets.Where(p => p.Archived == true).OrderByDescending(p => p.Created))
                                 {
 
                                     <TicketTableRows Ticket="@ticket" OnArchive="HandleArchive" OnRestore="HandleRestore"></TicketTableRows>

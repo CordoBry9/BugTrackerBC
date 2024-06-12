@@ -58,8 +58,6 @@ else
 
     [CascadingParameter]
     private Task<AuthenticationState>? AuthStateTask { get; set; }
-
-
     private ProjectDTO? project;
     private UserInfo? userInfo;
     protected override async Task OnInitializedAsync()
@@ -75,7 +73,7 @@ else
             if(project != null)
             {
                 await ProjectDTOService.UpdateProjectAsync(project, userInfo!.CompanyId);
-                Navigation.NavigateTo("/projects");
+                Navigation.NavigateTo(Navigation.Uri);
             }
         }
         catch (Exception ex)

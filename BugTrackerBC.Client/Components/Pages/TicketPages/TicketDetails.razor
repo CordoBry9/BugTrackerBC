@@ -53,7 +53,7 @@
                 </div>
 
                 <div class="row mb-4">
-                    <div class="col-12">
+                    <div class="col-12 mt-3 py-3">
                         <TicketCommentForm Comment="comment" CreateTheComment="HandleSubmit"></TicketCommentForm>
                     </div>
                     <div class="col-12">
@@ -76,46 +76,50 @@
 
                 <div class="row">
                     <div class="col border rounded p-3">
-                        <h4 class="text-center">Attachments: </h4>
+                        <h4 class="text-center">Attachments:</h4>
                         <TicketAttachments TicketId="ticketId" OnChange="HandleChange"></TicketAttachments>
-                        <div class="row g-4 mt-2">
-                            @foreach (TicketAttachmentDTO ticketAttachment in ticket.Attachments)
-                            {
-                                string? extension = Path.GetExtension(ticketAttachment.FileName)?.Trim('.') ?? "default";
-                                <div class="col-lg-3">
-                                    <div class="card h-100">
-                                        <div class="card-header">
-                                            <div class="card-title fs-4 mb-0">@ticketAttachment.FileName</div>
-                                        </div>
-                                        <div class="card-body">
-                                            <p class="card-text"><b>Description:</b> @ticketAttachment.Description</p>
-                                            <p class="card-text"><b>Upload Date:</b> @ticketAttachment.Created.ToString("d")</p>
-                                            <div class="d-flex align-text-between justify-content-between">
-                                                <a href="@ticketAttachment.AttachmentUrl" target="_blank" class="btn btn-primary textwrap">
-                                                    <img src="@($"png/{extension}.png")" alt="@extension" style="width:30px; height:30px;" />
-                                                    <br />
-
-                                                </a>
-                                                <div class="">
-                                                    <button class="btn btn-danger p-3" @onclick="() => DeleteAttachment(ticketAttachment.Id)">
-                                                        <i class="bi bi-trash"></i>
-
-                                                    </button>
+                        <div class="btn-group dropdown mt-3">
+                            <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Show Attachments
+                            </button>
+                            <div class="dropdown-menu p-2" style="width: auto; min-width: 300px; max-width: 90vw; max-height: 400px; overflow-y: auto;">
+                                <div class="row g-4">
+                                    @foreach (TicketAttachmentDTO ticketAttachment in ticket.Attachments)
+                                    {
+                                        string? extension = Path.GetExtension(ticketAttachment.FileName)?.Trim('.') ?? "default";
+                                        <div class="col-12">
+                                            <div class="card h-100">
+                                                <div class="card-header">
+                                                    <div class="card-title fs-4 mb-0">@ticketAttachment.FileName</div>
                                                 </div>
+                                                <div class="card-body">
+                                                    <p class="card-text"><b>Description:</b> @ticketAttachment.Description</p>
+                                                    <p class="card-text"><b>Upload Date:</b> @ticketAttachment.Created.ToString("d")</p>
+                                                    <div class="d-flex align-items-center justify-content-between">
+                                                        <a href="@ticketAttachment.AttachmentUrl" target="_blank" class="btn btn-primary textwrap">
+                                                            <img src="@($"png/{extension}.png")" alt="@extension" style="width: 30px; height: 30px;" />
+                                                        </a>
+                                                        <button class="btn btn-danger p-3" @onclick="() => DeleteAttachment(ticketAttachment.Id)">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                @if (ticketAttachment.User is not null)
+                                                {
+                                                    <div class="card-footer">
+                                                        <p class="card-text"><b>Uploaded by:</b> @ticketAttachment.User.FullName</p>
+                                                    </div>
+                                                }
                                             </div>
                                         </div>
-                                        @if (ticketAttachment.User is not null)
-                                        {
-                                            <div class="card-footer">
-                                                <p class="card-text"><b>Uploaded by:</b> @ticketAttachment.User.FullName</p>
-                                            </div>
-                                        }
-                                    </div>
+                                    }
                                 </div>
-                            }
+                            </div>
                         </div>
                     </div>
                 </div>
+
+
             </div>
 
         </Authorized>

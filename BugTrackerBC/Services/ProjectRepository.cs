@@ -11,9 +11,14 @@ namespace BugTrackerBC.Services
     public class ProjectRepository(IDbContextFactory<ApplicationDbContext> contextFactory, IServiceProvider svcProvider) : IProjectRepository
     {
 
-        public async Task<Project> AddProjectAsync(Project project, int companyId)
+        public async Task<Project> AddProjectAsync(Project project, int companyId, string userId)
         {
             using ApplicationDbContext context = contextFactory.CreateDbContext();
+
+            using IServiceScope scope = svcProvider.CreateScope();
+            UserManager<ApplicationUser> userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+            ApplicationUser? user = await userManager.FindByIdAsync(userId);
 
             if (project.CompanyId == companyId)
             {
@@ -21,6 +26,16 @@ namespace BugTrackerBC.Services
                 project.Created = DateTime.UtcNow;
                 context.Projects.Add(project);
                 await context.SaveChangesAsync();
+
+                bool isPM = await userManager.IsInRoleAsync(user, nameof(Roles.ProjectManager));
+
+                if (isPM == true) 
+                {
+                    Project? newProject = await context.Projects.FirstOrDefaultAsync(p => p.Id == project.Id);
+
+                    if (newProject != null) await AssignProjectManagerAsync(newProject.Id, user.Id, userId);
+                }
+
                 return project;
             }
             else
@@ -314,8 +329,6 @@ namespace BugTrackerBC.Services
             await context.SaveChangesAsync();
         }
 
-
-
         public async Task AssignProjectManagerAsync(int projectId, string userId, string adminId)
         {
             using ApplicationDbContext context = contextFactory.CreateDbContext();
@@ -358,7 +371,6 @@ namespace BugTrackerBC.Services
                 }
             }
         }
-
         public async Task RemoveProjectManagerAsync(int projectId, string adminId)
         {
             using IServiceScope scope = svcProvider.CreateScope();

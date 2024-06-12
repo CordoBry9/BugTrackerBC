@@ -124,9 +124,11 @@ namespace BugTrackerBC.Client.Services
             res.EnsureSuccessStatusCode();
         }
 
-        public Task<IEnumerable<TicketDTO>> GetMemberTicketsAsync(int companyId, string userId)
+        public async Task<IEnumerable<TicketDTO>> GetMemberTicketsAsync(int companyId, string userId)
         {
-            throw new NotImplementedException();
+            IEnumerable<TicketDTO> memberTickets = (await _httpClient.GetFromJsonAsync<IEnumerable<TicketDTO>>($"api/tickets/member/{userId}/tickets"))!;
+
+            return memberTickets;
         }
     }
 }

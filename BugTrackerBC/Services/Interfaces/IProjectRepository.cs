@@ -11,7 +11,7 @@ namespace BugTrackerBC.Services.Interfaces
         Task<IEnumerable<Project>> GetMemberArchivedProjectsAsync(int companyId, string memberId);
         Task<IEnumerable<Project>> GetArchivedProjectsAsync(int companyId);
         Task<Project?> GetProjectByIdAsync(int projectId, int companyId);
-        Task<Project> AddProjectAsync(Project project, int companyId);
+        Task<Project> AddProjectAsync(Project project, int companyId, string userId);
         Task UpdateProjectAsync(Project project, int companyId);
         Task ArchiveProjectAsync(int projectId, int companyId);
         Task RestoreProjectAsync(int projectId, int companyId);
