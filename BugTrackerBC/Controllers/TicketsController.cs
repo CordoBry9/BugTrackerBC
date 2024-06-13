@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis;
+using System.Net.Sockets;
 using System.Security.Claims;
 
 namespace BugTrackerBC.Controllers
@@ -18,24 +20,92 @@ namespace BugTrackerBC.Controllers
     {
         private readonly ITicketDTOService _ticketService;
         private readonly UserManager<ApplicationUser> _userManager;
-
+        private readonly IProjectDTOService _projectService;
         private int? _companyId => User.FindFirst("CompanyId") != null ? int.Parse(User.FindFirst("CompanyId")!.Value) : null;
 
-        public TicketsController(ITicketDTOService ticketService, UserManager<ApplicationUser> userManager)
+        private string _userId => _userManager.GetUserId(User)!;
+        public TicketsController(ITicketDTOService ticketService, UserManager<ApplicationUser> userManager, IProjectDTOService projectDTOService)
         {
             _ticketService = ticketService;
             _userManager = userManager;
+            _projectService = projectDTOService;
         }
 
         [HttpPost]
-        [Authorize]
+        [Authorize(Roles = $"{nameof(Roles.Admin)}, {nameof(Roles.ProjectManager)}, {nameof(Roles.Developer)}, {nameof(Roles.Submitter)}")]
         public async Task<ActionResult<TicketDTO>> AddTicket([FromBody] TicketDTO newTicket)
         {
+
             if (_companyId != null)
             {
-                TicketDTO ticket = await _ticketService.AddTicketAsync(newTicket, _companyId.Value);
 
-                return Ok(ticket);
+                if (User.IsInRole(nameof(Roles.Admin)))
+                {
+                    newTicket.SubmitterUserId = _userId;
+
+                    TicketDTO ticket = await _ticketService.AddTicketAsync(newTicket, _companyId.Value);
+
+                    return Ok(ticket);
+
+                }
+                if (User.IsInRole(nameof(Roles.ProjectManager)))
+                {
+                    UserDTO? projectManager = await _projectService.GetProjectManagerAsync(newTicket.ProjectId, _companyId.Value);
+                    if (projectManager.Id == _userId) 
+                    {
+                        newTicket.SubmitterUserId = _userId;
+
+                        TicketDTO ticket = await _ticketService.AddTicketAsync(newTicket, _companyId.Value);
+
+                        return Ok(ticket);
+                    }
+                    else
+                    {
+
+                        return BadRequest();
+                    }
+                }
+                if (User.IsInRole(nameof(Roles.Submitter)))
+                {
+                    newTicket.SubmitterUserId = _userId;
+                    IEnumerable<UserDTO>? members = await _projectService.GetProjectMembersAsync(newTicket.ProjectId, _companyId.Value);
+
+                    if (members.Any(m => m.Id == newTicket.SubmitterUserId)) 
+                    {
+                        TicketDTO ticket = await _ticketService.AddTicketAsync(newTicket, _companyId.Value);
+
+                        return Ok(ticket);
+
+                    }
+                    else
+                    {
+                        return NotFound();
+                    }
+                }
+                if (User.IsInRole(nameof(Roles.Developer)))
+                {
+                    newTicket.DeveloperUserId = _userId;
+
+                    newTicket.DeveloperUserId = _userId;
+                    IEnumerable<UserDTO>? members = await _projectService.GetProjectMembersAsync(newTicket.ProjectId, _companyId.Value);
+
+                    if (members.Any(m => m.Id == newTicket.DeveloperUserId))
+                    {
+                        TicketDTO ticket = await _ticketService.AddTicketAsync(newTicket, _companyId.Value);
+
+                        return Ok(ticket);
+                    }
+                    else
+                    {
+                        return BadRequest();
+                    }
+                }
+                else
+                {
+                    return BadRequest();
+                }
+
+
             }
             else
             {
@@ -81,28 +151,6 @@ namespace BugTrackerBC.Controllers
             }
         }
 
-        [HttpPut("{ticketId:int}/archive")]
-        public async Task<ActionResult> ArchiveTicket([FromRoute] int ticketId)
-        {
-            try
-            {
-                if (_companyId != null)
-                {
-                    await _ticketService.ArchiveTicketAsync(ticketId, _companyId.Value);
-                    return NoContent();
-                }
-                else
-                {
-                    return BadRequest();
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex);
-                return Problem();
-            }
-        }
-
         [HttpGet("{ticketId:int}")]
         public async Task<ActionResult<TicketDTO?>> GetTicketById([FromRoute] int ticketId)
         {
@@ -132,20 +180,72 @@ namespace BugTrackerBC.Controllers
             }
         }
 
+        [HttpPut("{ticketId:int}/archive")]
+        [Authorize(Roles = $"{nameof(Roles.Admin)}, {nameof(Roles.ProjectManager)}")]
+        public async Task<ActionResult> ArchiveTicket([FromRoute] int ticketId)
+        {
+            try
+            {
+                if (_companyId != null)
+                {
+                    if (User.IsInRole(nameof(Roles.ProjectManager)))
+                    {
+                        TicketDTO? ticketDTO = await _ticketService.GetTicketByIdAsync(ticketId, _companyId.Value);
+                        if (ticketDTO == null) return BadRequest();
+
+                        UserDTO? projectManager = await _projectService.GetProjectManagerAsync(ticketDTO.ProjectId, _companyId.Value);
+                        if (projectManager == null || projectManager.Id != _userId) return BadRequest();
+
+                        await _ticketService.ArchiveTicketAsync(ticketId, _companyId.Value);
+                        return NoContent();
+                    }
+                    else
+                    {
+                        return BadRequest();
+                    }
+                }
+                else
+                {
+                    return BadRequest();
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return Problem();
+            }
+        }
+
         [HttpPut("{ticketId:int}/restore")]
+        [Authorize(Roles = $"{nameof(Roles.Admin)}, {nameof(Roles.ProjectManager)}")]
         public async Task<ActionResult> RestoreTicket([FromRoute] int ticketId)
         {
             try
             {
                 if (_companyId != null)
                 {
-                    await _ticketService.RestoreTicketAsync(ticketId, _companyId.Value);
-                    return NoContent();
+                    if (User.IsInRole(nameof(Roles.ProjectManager)))
+                    {
+                        TicketDTO? ticketDTO = await _ticketService.GetTicketByIdAsync(ticketId, _companyId.Value);
+                        if (ticketDTO == null) return BadRequest();
+
+                        UserDTO? projectManager = await _projectService.GetProjectManagerAsync(ticketDTO.ProjectId, _companyId.Value);
+                        if (projectManager == null || projectManager.Id != _userId) return BadRequest();
+
+                        await _ticketService.RestoreTicketAsync(ticketId, _companyId.Value);
+                        return NoContent();
+                    }
+                    else
+                    {
+                        return BadRequest();
+                    }
                 }
                 else
                 {
                     return BadRequest();
                 }
+
             }
             catch (Exception ex)
             {
@@ -155,20 +255,60 @@ namespace BugTrackerBC.Controllers
         }
 
         [HttpPut("{ticketId:int}")]
-        public async Task<IActionResult> UpdateTicket([FromRoute] int ticketId, [FromBody] TicketDTO ticketDTO)
+        [Authorize(Roles = $"{nameof(Roles.Admin)}, {nameof(Roles.ProjectManager)}, {nameof(Roles.Developer)}, {nameof(Roles.Submitter)}")]
+        public async Task<IActionResult> UpdateTicket(int ticketId, [FromBody] TicketDTO updatedTicket)
         {
+            if (_companyId == null)
+            {
+                return BadRequest("Company ID not found.");
+            }
+
             try
             {
-                if (_companyId != null)
+                TicketDTO? existingTicket = await _ticketService.GetTicketByIdAsync(ticketId, _companyId.Value);
+                if (existingTicket == null)
                 {
-                    string userId = _userManager.GetUserId(User)!;
-                    await _ticketService.UpdateTicketAsync(ticketDTO, _companyId.Value, userId);
-                    return NoContent();
+                    return NotFound("Ticket not found.");
+                }
+
+                // Check authorization
+                if (User.IsInRole(nameof(Roles.Admin)))
+                {
+                    // Admins can edit any ticket
+                }
+                else if (User.IsInRole(nameof(Roles.ProjectManager)))
+                {
+                    UserDTO? projectManager = await _projectService.GetProjectManagerAsync(existingTicket.ProjectId, _companyId.Value);
+                    if (projectManager == null || projectManager.Id != _userId)
+                    {
+                        return BadRequest();
+                    }
+                }
+                else if (User.IsInRole(nameof(Roles.Developer)))
+                {
+                    if (existingTicket.SubmitterUserId != _userId && existingTicket.DeveloperUserId != _userId)
+                    {
+                        return BadRequest();
+                    }
+                }
+                else if (User.IsInRole(nameof(Roles.Submitter)))
+                {
+                    if (existingTicket.SubmitterUserId != _userId)
+                    {
+                        return BadRequest();
+                    }
                 }
                 else
                 {
                     return BadRequest();
                 }
+
+                // Ensure that SubmitterUserId and ProjectId are not updated
+                updatedTicket.SubmitterUserId = existingTicket.SubmitterUserId;
+                updatedTicket.ProjectId = existingTicket.ProjectId;
+
+                await _ticketService.UpdateTicketAsync(updatedTicket, _companyId.Value, _userId);
+                return Ok(updatedTicket);
             }
             catch (Exception ex)
             {
@@ -178,10 +318,9 @@ namespace BugTrackerBC.Controllers
         }
 
         [HttpGet("comments/{commentId:int}")]
-
         public async Task<ActionResult<TicketCommentDTO?>> GetCommentById([FromRoute] int commentId)
         {
-   
+
             try
             {
                 if (_companyId != null)
@@ -230,22 +369,66 @@ namespace BugTrackerBC.Controllers
         }
 
         [HttpPost("comments")]
-
+        [Authorize(Roles = $"{nameof(Roles.Admin)}, {nameof(Roles.ProjectManager)}, {nameof(Roles.Developer)}, {nameof(Roles.Submitter)}")]
         public async Task<IActionResult> AddComment([FromBody] TicketCommentDTO comment)
         {
-            if (_companyId != null)
+            if (_companyId == null)
             {
+                return BadRequest("Company ID not found.");
+            }
+
+            try
+            {
+                TicketDTO? ticket = await _ticketService.GetTicketByIdAsync(comment.TicketId, _companyId.Value);
+                if (ticket == null)
+                {
+                    return NotFound("Ticket not found.");
+                }
+
+                // Check authorization
+                if (User.IsInRole(nameof(Roles.Admin)))
+                {
+                    // Admins can add comments to any ticket
+                }
+                else if (User.IsInRole(nameof(Roles.ProjectManager)))
+                {
+                    UserDTO? projectManager = await _projectService.GetProjectManagerAsync(ticket.ProjectId, _companyId.Value);
+                    if (projectManager == null || projectManager.Id != _userId)
+                    {
+                        return Forbid();
+                    }
+                }
+                else if (User.IsInRole(nameof(Roles.Developer)))
+                {
+                    if (ticket.DeveloperUserId != _userId || ticket.SubmitterUserId != _userId)
+                    {
+                        return Forbid();
+                    }
+                }
+                else if (User.IsInRole(nameof(Roles.Submitter)))
+                {
+                    if (ticket.SubmitterUserId != _userId)
+                    {
+                        return Forbid();
+                    }
+                }
+                else
+                {
+                    return Forbid();
+                }
+
                 await _ticketService.AddCommentAsync(comment, _companyId.Value);
                 return Ok();
             }
-            else
+            catch (Exception ex)
             {
-                return BadRequest();
+                Console.WriteLine(ex);
+                return Problem("An error occurred while adding the comment.");
             }
         }
 
-        [HttpPut("comments/{commentId:int}")]
 
+        [HttpPut("comments/{commentId:int}")]
         public async Task<IActionResult> UpdateComment([FromBody] TicketCommentDTO comment)
         {
             try
@@ -267,7 +450,6 @@ namespace BugTrackerBC.Controllers
                 return Problem("An error occurred while updating the ticket.");
             }
         }
-
 
         [HttpDelete("comments/{commentId:int}")]
         public async Task<IActionResult> DeleteComment([FromRoute] int commentId)
@@ -295,9 +477,7 @@ namespace BugTrackerBC.Controllers
         // NOTE: the parameters are decorated with [FromForm] because they will be sent
         // encoded as multipart/form-data and NOT the typical JSON
         [HttpPost("{id}/attachments")]
-        public async Task<ActionResult<TicketAttachmentDTO>> PostTicketAttachment(int id,
-                                                                                    [FromForm] TicketAttachmentDTO attachment,
-                                                                                    [FromForm] IFormFile? file)
+        public async Task<ActionResult<TicketAttachmentDTO>> PostTicketAttachment(int id, [FromForm] TicketAttachmentDTO attachment, [FromForm] IFormFile? file)
         {
             if (attachment.TicketId != id || file is null)
             {
