@@ -3,6 +3,7 @@ using BugTrackerBC.Client.Services.Interfaces;
 using BugTrackerBC.Data;
 using BugTrackerBC.Helpers.Extensions;
 using BugTrackerBC.Models;
+using Humanizer.Localisation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -131,6 +132,7 @@ namespace BugTrackerBC.Controllers
                 return Problem();
             }
         }
+
 
         [HttpGet("member/{userId}/tickets")]
         public async Task<ActionResult<IEnumerable<TicketDTO>>> GetMemberTickets([FromRoute] string userId)
@@ -385,12 +387,7 @@ namespace BugTrackerBC.Controllers
                     return NotFound("Ticket not found.");
                 }
 
-                // Check authorization
-                if (User.IsInRole(nameof(Roles.Admin)))
-                {
-                    // Admins can add comments to any ticket
-                }
-                else if (User.IsInRole(nameof(Roles.ProjectManager)))
+                if (User.IsInRole(nameof(Roles.ProjectManager)))
                 {
                     UserDTO? projectManager = await _projectService.GetProjectManagerAsync(ticket.ProjectId, _companyId.Value);
                     if (projectManager == null || projectManager.Id != _userId)
@@ -429,12 +426,35 @@ namespace BugTrackerBC.Controllers
 
 
         [HttpPut("comments/{commentId:int}")]
+        [Authorize(Roles = $"{nameof(Roles.Admin)}, {nameof(Roles.ProjectManager)}, {nameof(Roles.Developer)}, {nameof(Roles.Submitter)}")]
         public async Task<IActionResult> UpdateComment([FromBody] TicketCommentDTO comment)
         {
             try
             {
                 if (_companyId != null)
                 {
+                    TicketDTO? ticket = await _ticketService.GetTicketByIdAsync(comment.TicketId, _companyId.Value);
+                    if (User.IsInRole(nameof(Roles.ProjectManager)))
+                    {
+                        UserDTO? projectManager = await _projectService.GetProjectManagerAsync(ticket.ProjectId, _companyId.Value);
+                        if (projectManager == null || projectManager.Id != _userId)
+                        {
+                            return Forbid();
+                        }
+                    }
+                    else if (User.IsInRole(nameof(Roles.Developer)))
+                    {
+                        if(ticket.DeveloperUserId != _userId) return BadRequest();
+
+                    }
+                    else if (User.IsInRole(nameof(Roles.Submitter)))
+                    {
+                        if(ticket.SubmitterUserId != _userId) return BadRequest();
+                    }
+                    else
+                    {
+                        return BadRequest();
+                    }
                     string userId = _userManager.GetUserId(User)!;
                     await _ticketService.UpdateCommentAsync(comment, userId);
                     return NoContent();
@@ -473,26 +493,71 @@ namespace BugTrackerBC.Controllers
             }
         }
 
+        // DELETE: api/Tickets/attachments/1
+        [HttpDelete("attachments/{attachmentId}")]
+        public async Task<IActionResult> DeleteTicketAttachment(int attachmentId)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            
+
+            await _ticketService.DeleteTicketAttachment(attachmentId, user!.CompanyId);
+
+            return NoContent();
+        }
+
         // POST: api/Tickets/5/attachments
         // NOTE: the parameters are decorated with [FromForm] because they will be sent
         // encoded as multipart/form-data and NOT the typical JSON
         [HttpPost("{id}/attachments")]
+        [Authorize(Roles = $"{nameof(Roles.Admin)}, {nameof(Roles.ProjectManager)}, {nameof(Roles.Developer)}, {nameof(Roles.Submitter)}")]
         public async Task<ActionResult<TicketAttachmentDTO>> PostTicketAttachment(int id, [FromForm] TicketAttachmentDTO attachment, [FromForm] IFormFile? file)
         {
             if (attachment.TicketId != id || file is null)
             {
+                return BadRequest("Invalid attachment data or file.");
+            }
+
+            ApplicationUser? user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return Unauthorized("User not found.");
+            }
+
+            TicketDTO? ticket = await _ticketService.GetTicketByIdAsync(id, user.CompanyId);
+            if (ticket == null)
+            {
+                return NotFound("Ticket not found.");
+            }
+
+            if (User.IsInRole(nameof(Roles.ProjectManager)))
+            {
+                UserDTO? projectManager = await _projectService.GetProjectManagerAsync(ticket.ProjectId, user.CompanyId);
+                if (projectManager == null || projectManager.Id != user.Id)
+                {
+                    return BadRequest();
+                }
+            }
+            else if (User.IsInRole(nameof(Roles.Developer)))
+            {
+                if (ticket.DeveloperUserId != user.Id && ticket.SubmitterUserId != user.Id)
+                {
+                    return BadRequest();
+                }
+            }
+            else if (User.IsInRole(nameof(Roles.Submitter)))
+            {
+                if (ticket.SubmitterUserId != user.Id)
+                {
+                    return BadRequest();
+                }
+            }
+            else
+            {
                 return BadRequest();
             }
 
-            var user = await _userManager.GetUserAsync(User);
-            var ticket = await _ticketService.GetTicketByIdAsync(id, user!.CompanyId);
-
-            if (ticket is null)
-            {
-                return NotFound();
-            }
-
-            attachment.UserId = user!.Id;
+            // Process the attachment
+            attachment.UserId = user.Id;
             attachment.Created = DateTimeOffset.Now;
 
             if (string.IsNullOrWhiteSpace(attachment.FileName))
@@ -505,25 +570,17 @@ namespace BugTrackerBC.Controllers
 
             try
             {
-                var newAttachment = await _ticketService.AddTicketAttachment(attachment, upload.Data!, upload.Type!, user!.CompanyId);
+                var newAttachment = await _ticketService.AddTicketAttachment(attachment, upload.Data!, upload.Type!, user.CompanyId);
                 return Ok(newAttachment);
             }
-            catch
+            catch (Exception ex)
             {
-                return Problem();
+                Console.WriteLine(ex);
+                return Problem("An error occurred while adding the attachment.");
             }
         }
 
-        // DELETE: api/Tickets/attachments/1
-        [HttpDelete("attachments/{attachmentId}")]
-        public async Task<IActionResult> DeleteTicketAttachment(int attachmentId)
-        {
-            var user = await _userManager.GetUserAsync(User);
 
-            await _ticketService.DeleteTicketAttachment(attachmentId, user!.CompanyId);
-
-            return NoContent();
-        }
 
     }
 }
