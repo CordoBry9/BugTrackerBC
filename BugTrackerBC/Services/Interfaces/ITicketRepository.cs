@@ -31,6 +31,9 @@ namespace BugTrackerBC.Services.Interfaces
 
         #region Attachments
         Task<TicketAttachment> AddTicketAttachment(TicketAttachment attachment, int companyId);
+
+        Task<TicketAttachment> GetAttachmentById(int attachmentId, int companyId);
+
         Task DeleteTicketAttachment(int attachmentId, int companyId);
         #endregion
     }

@@ -1,0 +1,107 @@
+﻿@using BugTrackerBC.Client.Models
+@using BugTrackerBC.Client.Services.Interfaces
+@inject NavigationManager Nav
+@inject IProjectDTOService ProjectService
+<AuthorizeView>
+    @if (Project != null)
+    {
+        <div class="card position-relative p-3 shadow-sm mb-4 card-hover">
+            <div class="card-body" @onclick="NavigateToDetails">
+                <h3 class="card-title mb-3" title="@Project.Name">@Project.Name</h3>
+                <p class="card-text">Created: @Project.Created.ToString("d")</p>
+                <p class="card-text">Priority: @Project.Priority</p>
+                <p class="card-text">Description: @Project.Description</p>
+
+            </div>
+            <div class="card-footer d-flex align-items-between">
+                <div class="row row-cols-1 g-3">
+                <div class="col icon-text">
+                    <i class="bi bi-card-list"></i> @Project.Tickets.Count() Tickets
+                </div>
+                <div class="col icon-text">
+                    <i class="bi bi-people"></i> @Project.Members.Count() Members
+                </div>
+                   
+                </div>
+                <div class="row row-cols-1 g-1">
+                    @if (IsArchivedView && Project.Archived)
+                    {
+                        @if (userInfo != null && (context.User.IsInRole(nameof(Roles.Admin)) || (projectManager != null && context.User.IsInRole(nameof(Roles.ProjectManager)) && projectManager.Id == userInfo.UserId)))
+                        {
+                            <button class="btn btn-outline-success" @onclick:stopPropagation="true" @onclick="HandleRestore">
+                                <i class="bx bx-check"></i>
+                            </button>
+                        }
+
+                    }
+                    @if (!Project.Archived)
+                    {
+                    @if (userInfo != null && (context.User.IsInRole(nameof(Roles.Admin)) || (projectManager != null && context.User.IsInRole(nameof(Roles.ProjectManager)) && projectManager.Id == userInfo.UserId)))
+                    {
+                        <button class="btn btn-outline-danger" @onclick:stopPropagation="true" @onclick="HandleArchive">
+                            <i class='bx bx-archive'></i>
+                        </button>
+                    }
+
+                    }
+                </div>
+            </div>
+        </div>
+
+    }
+
+</AuthorizeView>
+
+@code {
+    [Parameter]
+    public ProjectDTO? Project { get; set; }
+
+    [Parameter]
+    public UserInfo? userInfo { get; set; }
+
+    [Parameter]
+    public EventCallback<int> OnArchive { get; set; }
+
+    [Parameter]
+    public EventCallback<int> OnRestore { get; set; }
+
+    [Parameter]
+    public bool IsArchivedView { get; set; }
+
+    private UserDTO? projectManager;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Project != null && userInfo != null)
+        {
+            projectManager = await ProjectService.GetProjectManagerAsync(Project.Id, userInfo.CompanyId);
+        }
+    }
+
+    private async Task HandleArchive()
+    {
+        if (Project != null)
+        {
+            await OnArchive.InvokeAsync(Project.Id);
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleRestore()
+    {
+        if (Project != null)
+        {
+            await OnRestore.InvokeAsync(Project.Id);
+            StateHasChanged();
+        }
+    }
+
+    private void NavigateToDetails()
+    {
+        if (Project != null)
+        {
+            Nav.NavigateTo($"/details-project/{Project.Id}");
+        }
+    }
+
+}

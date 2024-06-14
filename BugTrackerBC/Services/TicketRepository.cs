@@ -135,6 +135,14 @@ namespace BugTrackerBC.Services
             return ticketcomments;
         }
 
+        public async Task<TicketAttachment> GetAttachmentById(int attachmentId, int companyId)
+        {
+            using ApplicationDbContext context = contextFactory.CreateDbContext();
+
+            TicketAttachment? ticketAttachment = await context.TicketAttachments.Include(a => a.User).FirstOrDefaultAsync(a => a.Id == attachmentId && a.User!.CompanyId == companyId);
+
+            return ticketAttachment!;
+        }
         public async Task<TicketComment?> GetCommentByIdAsync(int commentId, int companyId)
         {
             using ApplicationDbContext context = contextFactory.CreateDbContext();
@@ -293,5 +301,6 @@ namespace BugTrackerBC.Services
 
             return tickets;
         }
+
     }
 }

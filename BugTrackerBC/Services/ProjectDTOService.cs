@@ -3,21 +3,24 @@ using BugTrackerBC.Client.Services.Interfaces;
 using BugTrackerBC.Data;
 using BugTrackerBC.Models;
 using BugTrackerBC.Services.Interfaces;
+using Microsoft.AspNetCore.Identity;
 
 namespace BugTrackerBC.Services
 {
     public class ProjectDTOService : IProjectDTOService
     {
+        
         private readonly IProjectRepository _repository;
         private readonly ICompanyRepository _companyRepository;
-
-        public ProjectDTOService(IProjectRepository repository, ICompanyRepository companyRepository)
+        private readonly UserManager<ApplicationUser> _userManager;
+        public ProjectDTOService(IProjectRepository repository, ICompanyRepository companyRepository, UserManager<ApplicationUser> userManager)
         {
             _repository = repository;
             _companyRepository = companyRepository;
+            _userManager = userManager;
         }
 
-        public async Task<ProjectDTO> AddProjectAsync(ProjectDTO projectDTO, int companyId)
+        public async Task<ProjectDTO> AddProjectAsync(ProjectDTO projectDTO, int companyId, string userId)
         {
             Project newproject = new Project()
             {
@@ -28,15 +31,16 @@ namespace BugTrackerBC.Services
                 EndDate = projectDTO.EndDate.UtcDateTime,
                 Priority = projectDTO.Priority,
                 Archived = projectDTO.Archived,
-                CompanyId = companyId
+                CompanyId = companyId,
+                
             };
 
             if (newproject.CompanyId != companyId)
             {
                 Console.WriteLine("User does not have permission to create a project for this company.");
             }
-       
-                Project createdProject = await _repository.AddProjectAsync(newproject, companyId);
+
+                Project createdProject = await _repository.AddProjectAsync(newproject, companyId, userId);
                 return createdProject.ToDTO();
 
         }

@@ -1,0 +1,197 @@
+﻿@page "/my-projects"
+@using BugTrackerBC.Client.Components.UI.ProjectsUI
+@using BugTrackerBC.Client.Models
+@using BugTrackerBC.Client.Services.Interfaces
+@using Microsoft.AspNetCore.Authorization
+@inject IProjectDTOService ProjectDTOService
+@inject NavigationManager Nav
+@rendermode InteractiveAuto
+@attribute [Authorize]
+
+@if (userInfo == null)
+{
+    <h1>Please Log In</h1>
+}
+else
+{
+    @if (!archivedView)
+    {
+        <AuthorizeView Roles="ProjectManager, Submitter, Developer">
+            <Authorized>
+                <div class="row align-items-center mb-4">
+                    <div class="col">
+                        <h1 class="mb-0">Projects</h1>
+                    </div>
+                    <div class="col-auto">
+                        @if (context.User.IsInRole(nameof(Roles.Admin)) || context.User.IsInRole(nameof(Roles.ProjectManager)))
+                        {
+                            <button class="btn btn-primary me-2" type="button" data-bs-toggle="collapse" data-bs-target="#projectForm" aria-expanded="false" aria-controls="projectForm">
+                                Create a Project
+                            </button>
+                        }
+                        <button class="btn btn-primary" @onclick="ToggleArchivedView">
+                            Archived View
+                        </button>
+                    </div>
+                </div>
+
+                @if (context.User.IsInRole(nameof(Roles.Admin)) || context.User.IsInRole(nameof(Roles.ProjectManager)))
+                {
+                    <div class="collapse mt-3" id="projectForm">
+                        <div class="card card-body mx-auto" style="max-width: 600px;">
+                            <ProjectForm newProject="newProject" userInfo="userInfo" OnSubmit="HandleSubmit" />
+                        </div>
+                    </div>
+                }
+
+                <div class="row mt-3">
+                    @if (projects == null)
+                    {
+                        <p><em>Loading...</em></p>
+                    }
+                    else
+                    {
+                        @foreach (var project in projects.OrderByDescending(p => p.Created))
+                        {
+                            <div class="col-12 col-md-6 col-lg-4 mb-3">
+                                <ProjectCard Project="project" userInfo="userInfo" IsArchivedView="false" OnArchive="HandleArchive" OnRestore="HandleRestore" />
+                            </div>
+                        }
+                    }
+                </div>
+            </Authorized>
+            <NotAuthorized>
+                <h1>Access Denied</h1>
+                <p>You are not authorized to view this page. Please log in to continue.</p>
+            </NotAuthorized>
+        </AuthorizeView>
+    }
+    else
+    {
+        <AuthorizeView Roles="ProjectManager, Submitter, Developer">
+            <Authorized>
+                <div class="row align-items-center mb-4">
+                    <div class="col">
+                        <h1 class="mb-0">Archived Projects</h1>
+                    </div>
+                    <div class="col-auto">
+                        <button class="btn btn-primary" @onclick="ToggleArchivedView">
+                            Active Projects
+                        </button>
+                    </div>
+                </div>
+
+                <div class="row mt-3">
+                    @if (archivedProjects == null)
+                    {
+                        <p><em>Loading...</em></p>
+                    }
+                    else
+                    {
+                        @foreach (var project in archivedProjects)
+                        {
+                            <div class="col-12 col-md-6 col-lg-4 mb-3">
+                                <ProjectCard Project="project" userInfo="userInfo" IsArchivedView="true" OnArchive="HandleArchive" OnRestore="HandleRestore" />
+                            </div>
+                        }
+                    }
+                </div>
+            </Authorized>
+            <NotAuthorized>
+                <h1>Access Denied</h1>
+                <p>You are not authorized to view this page. Please log in to continue.</p>
+            </NotAuthorized>
+        </AuthorizeView>
+    }
+}
+
+@code {
+    #region states
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    [Parameter]
+    public ProjectDTO? Project { get; set; }
+    #endregion
+
+    #region fields
+    private List<ProjectDTO> projects = new List<ProjectDTO>();
+    private ProjectDTO? newProject = new ProjectDTO
+        {
+            StartDate = DateTime.Today,
+            EndDate = DateTime.Today.AddDays(7)
+        };
+
+    private UserInfo? userInfo;
+    private bool archivedView;
+    private List<ProjectDTO> archivedProjects = new List<ProjectDTO>();
+    #endregion
+
+    protected override async Task OnInitializedAsync()
+    {
+        userInfo = await UserInfoHelper.GetUserInfoAsync(AuthStateTask);
+        if (userInfo is not null)
+        {
+            projects = (await ProjectDTOService.GetMemberProjectsAsync(userInfo.CompanyId, userInfo.UserId)).ToList();
+            archivedProjects = (await ProjectDTOService.GetMemberArchivedProjectsAsync(userInfo.CompanyId, userInfo.UserId)).ToList();
+        }
+        else
+        {
+            Console.WriteLine("User is not logged in");
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        try
+        {
+            await ProjectDTOService.AddProjectAsync(newProject!, userInfo!.CompanyId, userInfo!.UserId);
+            projects = (await ProjectDTOService.GetMemberProjectsAsync(userInfo.CompanyId, userInfo.UserId)).ToList();
+            newProject = new ProjectDTO
+                {
+                    StartDate = DateTime.Today,
+                    EndDate = DateTime.Today.AddDays(7)
+                }; // Reset the form
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
+    }
+
+    private async Task HandleRestore(int projectId)
+    {
+        try
+        {
+            if (userInfo is not null)
+            {
+                await ProjectDTOService.RestoreProjectAsync(projectId, userInfo.CompanyId);
+                projects = (await ProjectDTOService.GetMemberProjectsAsync(userInfo.CompanyId, userInfo.UserId)).ToList();
+                archivedProjects = (await ProjectDTOService.GetMemberArchivedProjectsAsync(userInfo.CompanyId, userInfo.UserId)).ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
+    }
+
+    private async Task HandleArchive(int projectId)
+    {
+        try
+        {
+            await ProjectDTOService.ArchiveProjectAsync(projectId, userInfo!.CompanyId);
+            projects = (await ProjectDTOService.GetMemberProjectsAsync(userInfo.CompanyId, userInfo.UserId)).ToList();
+            archivedProjects = (await ProjectDTOService.GetMemberArchivedProjectsAsync(userInfo.CompanyId, userInfo.UserId)).ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
+    }
+
+    private void ToggleArchivedView()
+    {
+        archivedView = !archivedView;
+    }
+}

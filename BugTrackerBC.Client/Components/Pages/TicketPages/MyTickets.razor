@@ -7,120 +7,130 @@
 @inject ITicketDTOService TicketDTOService
 @inject IProjectDTOService ProjectDTOService
 @inject NavigationManager Nav
-@rendermode InteractiveWebAssembly
+@rendermode InteractiveAuto
 @attribute [Authorize]
 
-@if (archivedView == false)
+@if (userInfo != null)
 {
-    <AuthorizeView>
-        <Authorized>
-            <div class="row d-flex text-center justify-content-center">
-                <h1 class="text-center col-12">Tickets</h1>
-                <div class="col-6 text-center">
-                    <button class="btn btn-primary mt-2" type="button" data-bs-toggle="collapse" data-bs-target="#ticketForm" aria-expanded="false" aria-controls="ticketForm">
-                        Create a Ticket
-                    </button>
-                    <div class="collapse mt-3 justify-content-center" id="ticketForm">
-                        <div class="card card-body mx-auto" style="width: 50%;">
-                            <TicketForm newTicket="newTicket" projects="projects" userInfo="userInfo" OnSubmit="HandleSubmit" />
+
+    @if (archivedView == false)
+    {
+
+        <AuthorizeView>
+            <Authorized>
+                <div class="row align-items-center mb-4">
+                    <div class="col">
+                        <h1 class="mb-0">Tickets</h1>
+                    </div>
+                    <div class="col-auto">
+                        @if (context.User.IsInRole(nameof(Roles.Admin))
+                       || context.User.IsInRole(nameof(Roles.ProjectManager)) && projects.Any(p => p.Members.Any(m => m.Id == userInfo.UserId))
+                       || context.User.IsInRole(nameof(Roles.Developer)) && projects.Any(p => p.Members.Any(m => m.Id == userInfo.UserId))
+                       || context.User.IsInRole(nameof(Roles.Submitter)) && projects.Any(p => p.Members.Any(m => m.Id == userInfo.UserId)))
+                        {
+                            <button class="btn btn-primary me-2" type="button" data-bs-toggle="collapse" data-bs-target="#ticketForm" aria-expanded="false" aria-controls="ticketForm">
+                                Create a Ticket
+                            </button>
+                        }
+                        <button class="btn btn-primary" @onclick="ToggleArchivedView">
+                            Archived Tickets
+                        </button>
+                    </div>
+                </div>
+
+                <div class="collapse mt-3" id="ticketForm">
+                    <div class="card card-body mx-auto" style="max-width: 600px;">
+                        <TicketForm newTicket="newTicket" projects="projects" userInfo="userInfo" OnSubmit="HandleSubmit" />
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    @if (tickets == null)
+                    {
+                        <p><em>Loading...</em></p>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover table-bordered border-primary">
+                                <thead class="text-center">
+                                    <tr>
+                                        <th>Created</th>
+                                        <th>Title</th>
+                                        <th>Priority</th>
+                                        <th>Status</th>
+                                        <th>Type</th>
+                                        <th>Archive</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-center align-items-center">
+                                    @foreach (TicketDTO ticket in tickets.Where(p => !p.Archived).OrderByDescending(p => p.Created))
+                                    {
+                                        <TicketTableRows Ticket="@ticket" OnArchive="HandleArchive" OnRestore="HandleRestore" Projects="projects" userInfo="userInfo"></TicketTableRows>
+                                    }
+                                </tbody>
+                            </table>
                         </div>
+                    }
+                </div>
+            </Authorized>
+            <NotAuthorized>
+                <h1>Access Denied</h1>
+                <p>You are not authorized to view this page. Please log in to continue.</p>
+            </NotAuthorized>
+        </AuthorizeView>
+    }
+    else
+    {
+        <AuthorizeView>
+            <Authorized>
+                <div class="row align-items-center mb-4">
+                    <div class="col">
+                        <h1 class="mb-0">Tickets</h1>
+                    </div>
+                    <div class="col-auto">
+                        <button class="btn btn-primary" @onclick="ToggleArchivedView">
+                            Active Tickets
+                        </button>
                     </div>
                 </div>
-                <div class="text-center col-6">
-                    <button class="btn btn-primary mt-2" @onclick="ToggleArchivedView">
-                        Archived Tickets
-                    </button>
+
+                <div class="mt-3">
+                    @if (projects == null)
+                    {
+                        <p><em>Loading...</em></p>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover table-bordered border-primary">
+                                <thead class="text-center">
+                                    <tr>
+                                        <th>Created</th>
+                                        <th>Title</th>
+                                        <th>Priority</th>
+                                        <th>Status</th>
+                                        <th>Type</th>
+                                        <th>Restore</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-center align-items-center">
+                                    @foreach (TicketDTO ticket in tickets.Where(p => p.Archived == true).OrderByDescending(p => p.Created))
+                                    {
+                                        <TicketTableRows Ticket="@ticket" OnArchive="HandleArchive" OnRestore="HandleRestore" Projects="projects" userInfo="userInfo"></TicketTableRows>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
                 </div>
-            </div>
-
-            <div class="mt-3">
-                @if (tickets == null)
-                {
-                    <p><em>Loading...</em></p>
-                }
-                else
-                {
-                    <div class="table-responsive">
-                        <table class="table table-hover table-bordered border-primary">
-                            <thead class="text-center">
-                                <tr>
-                                    <th>Created</th>
-                                    <th>Title</th>
-                                    <th>Priority</th>
-                                    <th>Status</th>
-                                    <th>Type</th>
-                                    <th>Edit/Archive</th>
-                                </tr>
-                            </thead>
-                            <tbody class="text-center align-items-center">
-                                @foreach (TicketDTO ticket in tickets.Where(p => !p.Archived).OrderByDescending(p => p.Created))
-                                {
-
-                                    <TicketTableRows Ticket="@ticket" OnArchive="HandleArchive" OnRestore="HandleRestore"></TicketTableRows>
-                                }
-                            </tbody>
-                        </table>
-
-                    </div>
-                }
-            </div>
-        </Authorized>
-        <NotAuthorized>
-            <h1>Access Denied</h1>
-            <p>You are not authorized to view this page. Please log in to continue.</p>
-        </NotAuthorized>
-    </AuthorizeView>
-}
-else
-{
-    <AuthorizeView>
-        <Authorized>
-            <div class="row d-flex text-center justify-content-center">
-                <h1 class="text-center col-12">Tickets</h1>
-                <div class="text-center col-6">
-                    <button class="btn btn-primary mt-2" @onclick="ToggleArchivedView">
-                        Active Tickets
-                    </button>
-                </div>
-            </div>
-
-            <div class="mt-3">
-                @if (projects == null)
-                {
-                    <p><em>Loading...</em></p>
-                }
-                else
-                {
-
-                    <div class="table-responsive">
-                        <table class="table table-hover table-bordered border-primary">
-                            <thead class="text-center">
-                                <tr>
-                                    <th>Created</th>
-                                    <th>Title</th>
-                                    <th>Priority</th>
-                                    <th>Status</th>
-                                    <th>Type</th>
-                                    <th>Edit/Archive</th>
-                                </tr>
-                            </thead>
-                            <tbody class="text-center align-items-center">
-                                @foreach (TicketDTO ticket in tickets.Where(p => p.Archived == true).OrderByDescending(p => p.Created))
-                                {
-
-                                    <TicketTableRows Ticket="@ticket" OnArchive="HandleArchive" OnRestore="HandleRestore"></TicketTableRows>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                }
-            </div>
-        </Authorized>
-        <NotAuthorized>
-            <h1>Access Denied</h1>
-            <p>You are not authorized to view this page. Please log in to continue.</p>
-        </NotAuthorized>
-    </AuthorizeView>
+            </Authorized>
+            <NotAuthorized>
+                <h1>Access Denied</h1>
+                <p>You are not authorized to view this page. Please log in to continue.</p>
+            </NotAuthorized>
+        </AuthorizeView>
+    }
 }
 
 @code {
@@ -144,11 +154,11 @@ else
     private List<TicketDTO> archivedTickets = new List<TicketDTO>();
     private List<ProjectDTO> projects = new List<ProjectDTO>();
     private List<ProjectDTO> archivedProjects = new List<ProjectDTO>();
+    private UserDTO? projectManager = new UserDTO();
     #endregion
 
     protected override async Task OnInitializedAsync()
     {
-
         userInfo = await UserInfoHelper.GetUserInfoAsync(AuthStateTask);
 
         newTicket!.SubmitterUserId = userInfo!.UserId;
@@ -182,7 +192,6 @@ else
         {
             await TicketDTOService.RestoreTicketAsync(ticketId, userInfo!.CompanyId);
             tickets = (await TicketDTOService.GetMemberTicketsAsync(userInfo!.CompanyId, userInfo!.UserId)).ToList();
-
         }
         catch (Exception ex)
         {

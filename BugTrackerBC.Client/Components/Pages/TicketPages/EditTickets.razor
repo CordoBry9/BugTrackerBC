@@ -11,27 +11,26 @@
 
 @if (ticket == null)
 {
-    <p><em>Loading.</em></p> //loaded
+    <p><em>Loading...</em></p>
 }
 else
 {
+    <div class="card p-3">
+    <div class="lead fs-1 mb-2">Edit:</div>
     <EditForm Model="ticket" OnValidSubmit="HandleValidSubmit">
         <DataAnnotationsValidator />
         <ValidationSummary />
 
-        <!-- Floating label: Title -->
         <div class="form-floating mb-4">
             <InputText id="title" class="form-control" @bind-Value="ticket.Title" placeholder="Title" />
             <label for="title">Title</label>
         </div>
 
-        <!-- Floating label: Description -->
         <div class="form-floating mb-4">
             <InputTextArea id="description" class="form-control" @bind-Value="ticket.Description" style="height: 8rem;" placeholder="Description" />
             <label for="description">Description</label>
         </div>
 
-        <!-- Floating label: Priority -->
         <div class="form-floating mb-4">
             <InputSelect id="priority" class="form-select" @bind-Value="ticket.Priority">
                 @foreach (TicketPriority priority in Enum.GetValues(typeof(TicketPriority)))
@@ -42,7 +41,6 @@ else
             <label for="priority">Priority</label>
         </div>
 
-        <!-- Floating label: Type -->
         <div class="form-floating mb-4">
             <InputSelect id="type" class="form-select" @bind-Value="ticket.Type">
                 @foreach (TicketType type in Enum.GetValues(typeof(TicketType)))
@@ -53,7 +51,6 @@ else
             <label for="type">Type</label>
         </div>
 
-        <!-- Floating label: Status -->
         <div class="form-floating mb-4">
             <InputSelect id="status" class="form-select" @bind-Value="ticket.Status">
                 @foreach (TicketStatus status in Enum.GetValues(typeof(TicketStatus)))
@@ -64,9 +61,9 @@ else
             <label for="status">Status</label>
         </div>
 
-        <button type="submit" class="btn btn-primary">Save</button>
+        <button type="submit" class="btn btn-outline-primary">Save</button>
     </EditForm>
-
+    </div>
 }
 
 @code {
@@ -101,7 +98,7 @@ else
                     if (userInfo.Roles.Contains(nameof(Roles.Admin)))
                     {
 
-                        Navigation.NavigateTo("/all-tickets");
+                        Navigation.NavigateTo("/tickets");
                     }
                     else
                     {

@@ -1,11 +1,11 @@
-﻿@page "/my-projects"
+﻿
 @using BugTrackerBC.Client.Components.UI.ProjectsUI
 @using BugTrackerBC.Client.Models
 @using BugTrackerBC.Client.Services.Interfaces
 @using Microsoft.AspNetCore.Authorization
 @inject IProjectDTOService ProjectDTOService
 @inject NavigationManager Nav
-@rendermode InteractiveWebAssembly
+@rendermode InteractiveAuto
 @attribute [Authorize]
 
 @if (userInfo == null)
@@ -18,16 +18,27 @@
         <Authorized>
             <div class="row d-flex text-center justify-content-center">
                 <h1 class="text-center col-12">Projects</h1>
-                <div class="col-6 text-center">
-                    <button class="btn btn-primary mt-2" type="button" data-bs-toggle="collapse" data-bs-target="#ticketForm" aria-expanded="false" aria-controls="projectForm">
-                        Create a Ticket
-                    </button>
-                    <div class="collapse mt-3 justify-content-center" id="ticketForm">
-                        <div class="card card-body mx-auto" style="width: 50%;">
-                            <ProjectForm newProject="newProject" userInfo="userInfo" OnSubmit="HandleSubmit" />
+                @if (context.User.IsInRole(nameof(Roles.Admin)) || context.User.IsInRole(nameof(Roles.ProjectManager)))
+                {
+                    <div class="col-6 text-center">
+                        <button class="btn btn-primary mt-2" type="button" data-bs-toggle="collapse" data-bs-target="#ticketForm" aria-expanded="false" aria-controls="projectForm">
+                            Create a Project
+                        </button>
+                        <div class="collapse mt-3 justify-content-center" id="ticketForm">
+                            <div class="card card-body mx-auto" style="width: 50%;">
+                                <ProjectForm newProject="newProject" userInfo="userInfo" OnSubmit="HandleSubmit" />
+                            </div>
                         </div>
                     </div>
-                </div>
+                }
+                else
+                {
+                    <div class="col-6 text-center">
+                        <button class="btn btn-primary mt-2" disabled type="button" aria-expanded="false" aria-controls="projectForm">
+                            Create a Project
+                        </button>
+                    </div>
+                }
                 <div class="text-center col-6">
                     <button class="btn btn-primary mt-2" @onclick="ToggleArchivedView">
                         Archived View
@@ -51,7 +62,7 @@
                                     <th>Priority</th>
                                     <th>Start Date</th>
                                     <th>End Date</th>
-                                    <th>Actions</th>
+@*                                     <th>Actions</th> *@
                                 </tr>
                             </thead>
                             <tbody>

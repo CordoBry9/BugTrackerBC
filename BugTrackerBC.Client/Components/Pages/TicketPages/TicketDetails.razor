@@ -11,9 +11,9 @@
 @rendermode InteractiveAuto
 @attribute [Authorize]
 
-@if (ticket != null)
+@if (ticket != null && userInfo != null)
 {
-    <AuthorizeView Context="authorizedUser">
+    <AuthorizeView>
         <Authorized>
             <div class="row g-4">
                 <div class="col-lg-8 col-md-8">
@@ -22,10 +22,9 @@
                             <h4>Ticket: @ticket.Title</h4>
                         </div>
                         <div class="card-body">
-
                             <p class="card-text">Created: @ticket.Created.ToString("g") <br /> Updated: @ticket.Updated?.ToString("g")</p>
                             <hr />
-                            <p class="mt-3 card-tex">Priority: @ticket.Priority</p>
+                            <p class="mt-3 card-text">Priority: @ticket.Priority</p>
                             <hr />
                             <p class="mt-3 card-text">Status: @ticket.Status</p>
                             <hr />
@@ -36,25 +35,45 @@
                             <p class="mt-3 card-text">Project: @project?.Name</p>
                             <hr />
                             <div class="hstack justify-content-between">
-                                <a href="/tickets" class=" mt-3 btn btn-primary">Back to Tickets</a>
-                                <a class="btn btn-secondary mt-3" href="/edit-Ticket/@ticketId"><i class="bi bi-pencil"></i> Edit</a>
-                            </div>
+                                <a href="/tickets" class="mt-3 btn btn-primary">Back to Tickets</a>
 
+                                @* Authorization for editing a ticket *@
+                                @if ((context.User.IsInRole(nameof(Roles.Admin)))
+                               || (context.User.IsInRole(nameof(Roles.ProjectManager)) && project.Members.Any(m => m.Id == userInfo.UserId))
+                               || (context.User.IsInRole(nameof(Roles.Developer)) && ticket.DeveloperUserId == userInfo.UserId)
+                               || (context.User.IsInRole(nameof(Roles.Submitter)) && ticket.SubmitterUserId == userInfo.UserId))
+                                {
+                                    <a class="btn btn-secondary mt-3" href="/edit-Ticket/@ticketId"><i class="bi bi-pencil"></i> Edit</a>
+                                }
+                            </div>
                         </div>
                     </div>
                 </div>
+
                 <div class="col-md-4">
-                    <AssignTicketMembers assignDeveloper="AssignDev"
-                                         companyMembers="companyMembers" projectManager="projectManager"
-                                         projectManagers="projectManagers"
-                                         projectMembers="projectMembers"
-                                         Ticket="ticket"
-                                         userInfo="userInfo" />
+                    @* Authorization for assigning a ticket *@
+                    @if ((context.User.IsInRole(nameof(Roles.Admin)) )
+                   || (context.User.IsInRole(nameof(Roles.ProjectManager)) && project.Members.Any(m => m.Id == userInfo.UserId)))
+                    {
+                        <AssignTicketMembers assignDeveloper="AssignDev"
+                                             companyMembers="companyMembers" projectManager="projectManager"
+                                             projectManagers="projectManagers"
+                                             projectMembers="projectMembers"
+                                             Ticket="ticket"
+                                             userInfo="userInfo" />
+                    }
                 </div>
 
                 <div class="row mb-4">
                     <div class="col-12 mt-3 py-3">
-                        <TicketCommentForm Comment="comment" CreateTheComment="HandleSubmit"></TicketCommentForm>
+                        @* Authorization for adding comments *@
+                        @if ((context.User.IsInRole(nameof(Roles.Admin)))
+                       || (context.User.IsInRole(nameof(Roles.ProjectManager)) && project.Members.Any(m => m.Id == userInfo.UserId))
+                       || (context.User.IsInRole(nameof(Roles.Developer)) && (ticket.DeveloperUserId == userInfo.UserId || ticket.SubmitterUserId == userInfo.UserId))
+                       || (context.User.IsInRole(nameof(Roles.Submitter)) && ticket.SubmitterUserId == userInfo.UserId))
+                        {
+                            <TicketCommentForm Comment="comment" CreateTheComment="HandleSubmit"></TicketCommentForm>
+                        }
                     </div>
                     <div class="col-12">
                         <div class="">
@@ -68,16 +87,22 @@
                                     }
                                 }
                             </div>
-
                         </div>
-
                     </div>
                 </div>
 
                 <div class="row">
                     <div class="col border rounded p-3">
                         <h4 class="text-center">Attachments:</h4>
-                        <TicketAttachments TicketId="ticketId" OnChange="HandleChange"></TicketAttachments>
+                        @* Authorization for adding attachments *@
+                        @if ((context.User.IsInRole(nameof(Roles.Admin))) //add project companyId check to this / admin company id check
+                       || (context.User.IsInRole(nameof(Roles.ProjectManager)) && project.Members.Any(m => m.Id == userInfo.UserId))
+                       || (context.User.IsInRole(nameof(Roles.Developer)) && (ticket.DeveloperUserId == userInfo.UserId || ticket.SubmitterUserId == userInfo.UserId))
+                       || (context.User.IsInRole(nameof(Roles.Submitter)) && ticket.SubmitterUserId == userInfo.UserId))
+                        {
+                            <TicketAttachments TicketId="ticketId" OnChange="HandleChange"></TicketAttachments>
+                        }
+
                         <div class="btn-group dropdown mt-3">
                             <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 Show Attachments
@@ -99,9 +124,15 @@
                                                         <a href="@ticketAttachment.AttachmentUrl" target="_blank" class="btn btn-primary textwrap">
                                                             <img src="@($"png/{extension}.png")" alt="@extension" style="width: 30px; height: 30px;" />
                                                         </a>
-                                                        <button class="btn btn-danger p-3" @onclick="() => DeleteAttachment(ticketAttachment.Id)">
-                                                            <i class="bi bi-trash"></i>
-                                                        </button>
+                                                        @* Authorization for deleting attachments *@
+                                                        @if ((context.User.IsInRole(nameof(Roles.Admin)))
+                                                       || (context.User.IsInRole(nameof(Roles.ProjectManager)) && project.Members.Any(m => m.Id == userInfo.UserId))
+                                                       || (ticketAttachment.UserId == userInfo.UserId))
+                                                        {
+                                                            <button class="btn btn-danger p-3" @onclick="() => DeleteAttachment(ticketAttachment.Id)">
+                                                                <i class="bi bi-trash"></i>
+                                                            </button>
+                                                        }
                                                     </div>
                                                 </div>
                                                 @if (ticketAttachment.User is not null)
@@ -118,10 +149,7 @@
                         </div>
                     </div>
                 </div>
-
-
             </div>
-
         </Authorized>
 
         <NotAuthorized>
@@ -209,8 +237,6 @@
     private async Task AssignDev(TicketDTO ticketupdate)
     {
         if (ticketupdate != null && userInfo != null)
-        //add errorMessage/text-danger pop up for if ticketUpdate devID is already same as current tickets, or make it so
-        // inputselect wont show already selected or assigned developers
         {
             await TicketDTOService.UpdateTicketAsync(ticketupdate, userInfo.CompanyId, userInfo.UserId);
             ticket = await TicketDTOService.GetTicketByIdAsync(ticketId, userInfo.CompanyId);

@@ -21,29 +21,35 @@
                         }
                     </InputSelect>
                     <button type="button" class="btn btn-primary mt-2" @onclick="AssignManager">Assign Manager</button>
-
                     <button type="button" class="btn btn-danger mt-2" @onclick="RemoveManager">Remove Manager</button>
                 </AuthorizeView>
             </div>
             <AuthorizeView Roles="Admin, ProjectManager" Context="memberContext">
                 <div class="@(memberContext.User.IsInRole(nameof(Roles.ProjectManager)) ? "col-12" : "col-lg-6")">
-                    <label for="members" class="form-label">Company Members:</label>
-                    <InputSelect id="members" @bind-Value="assignedMemberId" class="form-control">
-                        <option value="">Select a Member</option>
-                        @if (companyMembers != null)
-                        {
-                            @foreach (UserDTO member in companyMembers.Where(cm => cm.Role != nameof(Roles.ProjectManager) && cm.Role != nameof(Roles.DemoUser) && cm.Role != nameof(Roles.Admin)))
+                    @if (memberContext.User.IsInRole(nameof(Roles.Admin)) ||
+                    (projectManager != null && projectManager.Id == userInfo?.UserId))
+                    {
+                        <label for="members" class="form-label">Company Members:</label>
+                        <InputSelect id="members" @bind-Value="assignedMemberId" class="form-control">
+                            <option value="">Select a Member</option>
+                            @if (companyMembers != null)
                             {
-                                @if (member != null)
+                                @foreach (UserDTO member in companyMembers.Where(cm => cm.Role != nameof(Roles.ProjectManager) && cm.Role != nameof(Roles.DemoUser) && cm.Role != nameof(Roles.Admin)))
                                 {
-                                    <option value="@member.Id">@member.FullName @member.Role</option>
+                                    @if (member != null)
+                                    {
+                                        <option value="@member.Id">@member.FullName @member.Role</option>
+                                    }
                                 }
                             }
-                        }
-                    </InputSelect>
-                    <button type="button" class="btn btn-secondary mt-2" @onclick="AssignMember">Add Member</button>
-
-                    <button type="button" class="btn btn-danger mt-2" @onclick="RemoveMember">Remove Member</button>
+                        </InputSelect>
+                        <button type="button" class="btn btn-secondary mt-2" @onclick="AssignMember">Add Member</button>
+                        <button type="button" class="btn btn-danger mt-2" @onclick="RemoveMember">Remove Member</button>
+                    }
+                    else
+                    {
+                        <p class="text-muted">Only the assigned Project Manager can manage members.</p>
+                    }
                 </div>
             </AuthorizeView>
         </div>
@@ -77,7 +83,6 @@
 
     private string? assignedManagerId;
     private string? assignedMemberId;
-
 
     private async Task AssignManager()
     {
@@ -116,7 +121,5 @@
         {
             Console.WriteLine(ex);
         }
-
-
     }
 }

@@ -34,6 +34,7 @@ namespace BugTrackerBC.Client.Services.Interfaces
 
         #region Attachments
         Task<TicketAttachmentDTO> AddTicketAttachment(TicketAttachmentDTO attachment, byte[] uploadData, string contentType, int companyId);
+        Task<TicketAttachmentDTO> GetAttachmentById(int attachmentId, int companyId);
         Task DeleteTicketAttachment(int attachmentId, int companyId);
 
         #endregion

@@ -73,7 +73,7 @@ else
             if(project != null)
             {
                 await ProjectDTOService.UpdateProjectAsync(project, userInfo!.CompanyId);
-                Navigation.NavigateTo(Navigation.Uri);
+                Navigation.NavigateTo($"/details-project/{project.Id}");
             }
         }
         catch (Exception ex)

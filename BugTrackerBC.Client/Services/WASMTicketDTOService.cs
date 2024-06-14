@@ -130,5 +130,12 @@ namespace BugTrackerBC.Client.Services
 
             return memberTickets;
         }
+
+        public async Task<TicketAttachmentDTO> GetAttachmentById(int attachmentId, int companyId)
+        {
+            TicketAttachmentDTO attachment = (await _httpClient.GetFromJsonAsync<TicketAttachmentDTO>($"api/ticket/attachments/attachment/{attachmentId}"))!;
+
+            return attachment;
+        }
     }
 }

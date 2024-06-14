@@ -6,23 +6,35 @@
 
 @if (Project != null)
 {
-    <tr>
-        <td>@Project.Created.ToString("g")</td>
-        <td><a href="/details-project/@Project.Id" class="text-decoration-none">@Project.Name</a></td>
-        <td>@Project.Priority</td>
-        <td>@Project.StartDate.ToString("d")</td>
-        <td>@Project.EndDate.ToString("d")</td>
-        <td class="p-2"style="width: 4rem;">
+    <AuthorizeView>
+
+        <tr>
+            <td>@Project.Created.ToString("d")</td>
+            <td><a href="/details-project/@Project.Id" class="text-decoration-none">@Project.Name</a></td>
+            <td>@Project.Priority</td>
+@*             <td>@Project.StartDate.ToString("d")</td>
+            <td>@Project.EndDate.ToString("d")</td> *@
             @if (Project.Archived == false)
             {
-                <div class="vstack">
+                
+                @if (context.User.IsInRole(nameof(Roles.Admin)) || projectManager != null && context.User.IsInRole(nameof(Roles.ProjectManager)) && projectManager.Id == userInfo!.UserId)
+                {
+                    <td class="p-2" style="width: 4rem;">
+                        <div class="vstack">
+                            <button class="btn btn-outline-info p-2" @onclick="HandleArchive"><i class='bx bx-archive'></i></button>
+                           @*  <a class="btn btn-info" href="/edit-project/@Project.Id"><i class="bi bi-pencil"></i> Edit</a> *@
+                        </div>
+                    </td>
+                }
+                else
+                {
+                    <td>
 
-                <button class="btn btn-danger mb-2" @onclick="HandleArchive"><i class="bi bi-trash"></i> Archive</button>
-                <a class="btn btn-info" href="/edit-project/@Project.Id"><i class="bi bi-pencil"></i> Edit</a>
-                </div>
+                    </td>
+                }
             }
-        </td>
-    </tr>
+        </tr>
+    </AuthorizeView>
 }
 
 @code {
@@ -30,10 +42,24 @@
     public ProjectDTO? Project { get; set; }
 
     [Parameter]
+    public UserInfo? userInfo { get; set; }
+
+    [Parameter]
     public EventCallback<int> OnRestore { get; set; }
 
     [Parameter]
     public EventCallback<int> OnArchive { get; set; }
+
+    private UserDTO? projectManager;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Project != null && userInfo != null)
+        {
+            projectManager = await ProjectService.GetProjectManagerAsync(Project.Id, userInfo.CompanyId);
+        }
+
+    }
 
     private async Task HandleArchive()
     {
@@ -43,5 +69,6 @@
             StateHasChanged();
         }
     }
+
 
 }

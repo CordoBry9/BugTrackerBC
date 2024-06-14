@@ -190,6 +190,11 @@ namespace BugTrackerBC.Controllers
             {
                 if (_companyId != null)
                 {
+                    if (User.IsInRole(nameof(Roles.Admin)))
+                    {
+                        await _ticketService.ArchiveTicketAsync(ticketId, _companyId.Value);
+                        return NoContent();
+                    }
                     if (User.IsInRole(nameof(Roles.ProjectManager)))
                     {
                         TicketDTO? ticketDTO = await _ticketService.GetTicketByIdAsync(ticketId, _companyId.Value);
@@ -227,6 +232,11 @@ namespace BugTrackerBC.Controllers
             {
                 if (_companyId != null)
                 {
+                    if (User.IsInRole(nameof(Roles.Admin)))
+                    {
+                        await _ticketService.ArchiveTicketAsync(ticketId, _companyId.Value);
+                        return NoContent();
+                    }
                     if (User.IsInRole(nameof(Roles.ProjectManager)))
                     {
                         TicketDTO? ticketDTO = await _ticketService.GetTicketByIdAsync(ticketId, _companyId.Value);
@@ -472,13 +482,39 @@ namespace BugTrackerBC.Controllers
         }
 
         [HttpDelete("comments/{commentId:int}")]
+        [Authorize(Roles = $"{nameof(Roles.Admin)}, {nameof(Roles.ProjectManager)}, {nameof(Roles.Developer)}, {nameof(Roles.Submitter)}")]
         public async Task<IActionResult> DeleteComment([FromRoute] int commentId)
         {
             try
             {
                 if (_companyId != null)
                 {
-                    await _ticketService.DeleteCommentAsync(commentId, _companyId.Value);
+                    TicketCommentDTO? comment = await _ticketService.GetCommentByIdAsync(commentId, _companyId.Value);
+                    if (comment == null) return BadRequest();
+                    TicketDTO? ticket = await _ticketService.GetTicketByIdAsync(comment.TicketId, _companyId.Value);
+                    if (User.IsInRole(nameof(Roles.ProjectManager)))
+                    {
+                        UserDTO? projectManager = await _projectService.GetProjectManagerAsync(ticket.ProjectId, _companyId.Value);
+                        if (projectManager == null || projectManager.Id != _userId)
+                        {
+                            return Forbid();
+                        }
+                    }
+                    else if (User.IsInRole(nameof(Roles.Developer)))
+                    {
+                        if (ticket?.DeveloperUserId != _userId) return BadRequest();
+
+                    }
+                    else if (User.IsInRole(nameof(Roles.Submitter)))
+                    {
+                        if (ticket?.SubmitterUserId != _userId) return BadRequest();
+                    }
+                    else
+                    {
+                        return BadRequest();
+                    }
+                    string userId = _userManager.GetUserId(User)!;
+                    await _ticketService.UpdateCommentAsync(comment, userId);
                     return NoContent();
                 }
                 else
@@ -489,7 +525,7 @@ namespace BugTrackerBC.Controllers
             catch (Exception ex)
             {
                 Console.WriteLine(ex);
-                return Problem("An error occurred while deleting the ticket.");
+                return Problem("An error occurred while updating the ticket.");
             }
         }
 
@@ -497,12 +533,27 @@ namespace BugTrackerBC.Controllers
         [HttpDelete("attachments/{attachmentId}")]
         public async Task<IActionResult> DeleteTicketAttachment(int attachmentId)
         {
-            var user = await _userManager.GetUserAsync(User);
-            
 
-            await _ticketService.DeleteTicketAttachment(attachmentId, user!.CompanyId);
+            if(_companyId is null) return BadRequest();
 
+            ApplicationUser? user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return Unauthorized("User not found.");
+            }
+
+            TicketAttachmentDTO attachment = await _ticketService.GetAttachmentById(attachmentId, _companyId.Value);
+            if (user?.CompanyId == _companyId && User.IsInRole("Admin") || user?.Id == attachment.UserId)
+            {
+
+            await _ticketService.DeleteTicketAttachment(attachmentId, user.CompanyId);
             return NoContent();
+
+            }
+            else 
+            {
+                return BadRequest();
+            }
         }
 
         // POST: api/Tickets/5/attachments

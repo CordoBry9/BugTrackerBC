@@ -7,7 +7,7 @@ namespace BugTrackerBC.Client.Helpers
 
         public static readonly string DefaultCategoryPicture = "/img/default_category.png";
         public static readonly string DefaultProfilePicture = "/img/Default_pfp.svg";
-        public static readonly string DefaultCompanyPicture = "/img/penandpaper.jpg";
+        public static readonly string DefaultCompanyPicture = "/img/companyimg.svg";
         public static readonly int MaxFileSize = 5 * 1024 * 1024;
 
         public static async Task<string> GetDataUrl(IBrowserFile file)

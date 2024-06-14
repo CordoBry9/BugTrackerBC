@@ -1,61 +1,53 @@
-﻿@using BugTrackerBC.Client.Services.Interfaces
+﻿@using BugTrackerBC.Client.Models
+@using BugTrackerBC.Client.Services.Interfaces
 @using Microsoft.AspNetCore.Authorization
 @inject IProjectDTOService ProjectService
 @inject NavigationManager Navigation
 @attribute [Authorize]
 
+<EditForm Model="newProject" OnValidSubmit="HandleSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
 
-@if(newProject != null)
-{
-    <EditForm Model="newProject" OnValidSubmit="HandleSubmit">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
+    <div class="mb-3">
+        <label for="name" class="form-label">Name</label>
+        <InputText id="name" class="form-control" @bind-Value="newProject.Name" />
+    </div>
 
-        <div class="mb-3">
-            <label for="name" class="form-label">Name</label>
-            <InputText id="name" class="form-control" @bind-Value="newProject.Name" />
-        </div>
+    <div class="mb-3">
+        <label for="description" class="form-label">Description</label>
+        <InputTextArea id="description" class="form-control" @bind-Value="newProject.Description" />
+    </div>
 
-        <div class="mb-3">
-            <label for="description" class="form-label">Description</label>
-            <InputTextArea id="description" class="form-control" @bind-Value="newProject.Description" />
-        </div>
+    <div class="mb-3">
+        <label for="priority" class="form-label">Priority</label>
+        <InputSelect id="priority" class="form-control" @bind-Value="newProject.Priority">
+            @foreach (ProjectPriority priority in Enum.GetValues(typeof(ProjectPriority)))
+            {
+                <option value="@priority">@priority.GetDisplayName()</option>
+            }
+        </InputSelect>
+    </div>
 
-        <div class="mb-3">
-            <label for="priority" class="form-label">Priority</label>
-            <InputSelect id="priority" class="form-control" @bind-Value="newProject.Priority">
-                @foreach (ProjectPriority priority in Enum.GetValues(typeof(ProjectPriority)))
-                {
-                    <option value="@priority">@priority.GetDisplayName()</option>
-                }
-            </InputSelect>
-        </div>
+    <div class="mb-3">
+        <label for="startDate" class="form-label">Start Date</label>
+        <InputDate id="startDate" class="form-control" @bind-Value="newProject.StartDate" />
+    </div>
 
-        <div class="mb-3">
-            <label for="startDate" class="form-label">Start Date</label>
-            <InputDate id="startDate" class="form-control" @bind-Value="newProject.StartDate" />
-        </div>
+    <div class="mb-3">
+        <label for="endDate" class="form-label">End Date</label>
+        <InputDate id="endDate" class="form-control" @bind-Value="newProject.EndDate" />
+    </div>
 
-        <div class="mb-3">
-            <label for="endDate" class="form-label">End Date</label>
-            <InputDate id="endDate" class="form-control" @bind-Value="newProject.EndDate" />
-        </div>
-
-        <button type="submit" class="btn btn-primary">Create</button>
-    </EditForm>
-}
-
+    <button type="submit" class="btn btn-primary">Create</button>
+</EditForm>
 
 @code {
     [Parameter]
-
     public ProjectDTO? newProject { get; set; }
 
     [Parameter]
     public EventCallback<ProjectDTO> OnSubmit { get; set; }
-
-    [CascadingParameter]
-    private Task<AuthenticationState>? AuthStateTask { get; set; }
 
     [Parameter]
     public UserInfo? userInfo { get; set; }

@@ -95,6 +95,7 @@ namespace BugTrackerBC.Controllers
 
 
         [HttpPut("update/{company.Id}")]
+        [Authorize(Roles = $"{nameof(Roles.Admin)}")]
         public async Task<IActionResult> UpdateCompany([FromBody] CompanyDTO company)
         {
             if (company == null || company.Id != CompanyId)
@@ -114,7 +115,7 @@ namespace BugTrackerBC.Controllers
         }
 
         [HttpPut("update/member")]
-
+        [Authorize(Roles = $"{nameof(Roles.Admin)}")]
         public async Task<IActionResult> UpdateUserRoleAsync([FromBody] UserDTO user)
         {
             if (user == null)

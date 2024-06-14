@@ -1,4 +1,4 @@
-﻿using BugTrackerBC.Client.Components.Pages.ProjectPages;
+﻿
 using BugTrackerBC.Client.Models;
 using BugTrackerBC.Client.Services.Interfaces;
 using BugTrackerBC.Data;
@@ -92,6 +92,12 @@ namespace BugTrackerBC.Services
                 await _repository.UpdateTicketAsync(updatedTicket, companyId, userId);
 
             }
+        }
+        public async Task<TicketAttachmentDTO> GetAttachmentById(int attachmentId, int companyId)
+        {
+            TicketAttachment attachment = (await _repository.GetAttachmentById(attachmentId, companyId))!;
+
+            return attachment.ToDTO();
         }
 
         public async Task<IEnumerable<TicketCommentDTO>> GetTicketCommentsAsync(int ticketId, int companyId)

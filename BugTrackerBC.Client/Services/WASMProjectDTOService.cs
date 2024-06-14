@@ -21,7 +21,7 @@ namespace BugTrackerBC.Client.Services
             response.EnsureSuccessStatusCode();
         }
 
-        public async Task<ProjectDTO> AddProjectAsync(ProjectDTO projectDTO, int companyId)
+        public async Task<ProjectDTO> AddProjectAsync(ProjectDTO projectDTO, int companyId, string userId)
         {
             HttpResponseMessage response = await _httpClient.PostAsJsonAsync("api/projects", projectDTO);
             response.EnsureSuccessStatusCode();

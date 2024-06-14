@@ -1,7 +1,7 @@
 ﻿@using BugTrackerBC.Client.Services.Interfaces
 @inject ITicketDTOService TicketDTOService
 
-@if (Comment != null)
+@if (Comment != null && userInfo != null)
 {
     @if (currentState == CommentState.Viewing)
     {
@@ -17,18 +17,19 @@
 
             <AuthorizeView>
 
-                    @if (Comment.UserId == userInfo!.UserId)
-                    {
-                        <div class="d-flex align-items-between">
-                            <button class="nav-link fs-sm fw-semibold px-0 py-2" @onclick="() => ChangeState(CommentState.Deleting)">
-                                <i class="bi bi-trash text-danger fs-xl ms-2"></i>
-                            </button>
-                            <button class="nav-link fs-sm fw-semibold px-0 py-2" @onclick="() => ChangeState(CommentState.Editing)">
-                                <i class="bi bi-pencil text-success fs-xl ms-2"></i>
-                            </button>
-                        </div>
-                    }
-
+                @if ((context.User.IsInRole(nameof(Roles.Admin)))
+               || (context.User.IsInRole(nameof(Roles.ProjectManager))
+               || Comment.UserId == userInfo.UserId))
+                {
+                    <div class="d-flex align-items-between">
+                        <button class="nav-link fs-sm fw-semibold px-0 py-2" @onclick="() => ChangeState(CommentState.Deleting)">
+                            <i class="bi bi-trash text-danger fs-xl ms-2"></i>
+                        </button>
+                        <button class="nav-link fs-sm fw-semibold px-0 py-2" @onclick="() => ChangeState(CommentState.Editing)">
+                            <i class="bi bi-pencil text-success fs-xl ms-2"></i>
+                        </button>
+                    </div>
+                }
             </AuthorizeView>
         </div>
     }
@@ -49,7 +50,7 @@
                 <div class="col-12 d-flex flex-column">
                     <div class="mb-2 flex-fill vstack">
                         <label class="form-label mt-2"><h4>Edit your comment</h4></label>
-                        <InputTextArea @bind-Value="Comment.Content"/>
+                        <InputTextArea @bind-Value="Comment.Content" />
                         <ValidationMessage For="() => Comment.Content"></ValidationMessage>
                     </div>
 
@@ -123,5 +124,4 @@
             Console.WriteLine(ex);
         }
     }
-
 }

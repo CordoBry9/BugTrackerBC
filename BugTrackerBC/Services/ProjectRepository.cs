@@ -68,7 +68,7 @@ namespace BugTrackerBC.Services
         {
             using ApplicationDbContext context = contextFactory.CreateDbContext();
 
-            IEnumerable<Project> projects = await context.Projects
+            IEnumerable<Project> projects = await context.Projects.Include(m => m.Members)
                                            .Where(p => p.CompanyId == companyId)
                                            .ToListAsync();
 

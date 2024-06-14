@@ -15,9 +15,7 @@
 <PageTitle>Company | Info </PageTitle>
  @*
      TODO:
-
  Add error for authorizations
- Fix images on listgroup
  *@
  
 @if (userInfo != null && company != null)
@@ -111,7 +109,9 @@
                                         }
                                         else
                                         { *@
-                                            <img src="@selectedMember.ImageUrl" class="previewUpload img-thumbnail "/>
+                                        <label for="avatar" class="form-label">Avatar:</label>
+                                        <br />
+                                         <img id="avatar" src="@selectedMember.ImageUrl" class="previewUpload img-thumbnail"/>
                                        @*  } *@
                                     </div>
                                     <div class="text-center">
