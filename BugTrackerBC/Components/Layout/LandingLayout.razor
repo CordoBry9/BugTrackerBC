@@ -1,0 +1,24 @@
+﻿@inherits LayoutComponentBase
+
+<main class="page-wrapper d-flex flex-column">
+    <NavMenu />
+
+    <div class="container-fluid mt-4 mb-lg-5 mb-sm-5 pt-lg-2 pb-5 flex-grow-1">
+        <div class="container-fluid mt-lg-4 pt-5 g-2">
+            @Body
+        </div>
+    </div>
+    <Footer />
+
+    <!-- Back to top button -->
+    <a href="#top" class="btn-scroll-top" data-scroll>
+        <span class="btn-scroll-top-tooltip text-muted fs-sm me-2">Top</span>
+        <i class="btn-scroll-top-icon bx bx-chevron-up"></i>
+    </a>
+</main>
+
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
+</div>

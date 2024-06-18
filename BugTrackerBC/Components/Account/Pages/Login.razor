@@ -1,20 +1,24 @@
 ﻿@page "/Account/Login"
 
 @using System.ComponentModel.DataAnnotations
+@using BugTrackerBC.Components.Layout
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Identity
 @using BugTrackerBC.Data
-
+@layout LandingLayout
 @inject SignInManager<ApplicationUser> SignInManager
 @inject ILogger<Login> Logger
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
+@inject UserManager<ApplicationUser> UserManager
 
 <PageTitle>Log in</PageTitle>
 
-<h1>Log in</h1>
-<div class="row">
-    <div class="col-md-4">
+<div class="container">
+
+<h1 class="text-center">Log in</h1>
+<div class="row justify-content-center">
+    <div class="col-5">
         <section>
             <StatusMessage Message="@errorMessage" />
             <EditForm Model="Input" method="post" OnValidSubmit="LoginUser" FormName="login">
@@ -54,14 +58,34 @@
                 </div>
             </EditForm>
         </section>
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title">Log in as a Demo User</h3>
+                    <p>Click one of the buttons below to log in with a demo account</p>
+                    <EditForm id="demo-account" Model="Input" method="post" OnSubmit="LoginDemoUser" FormName="demo">
+                        <div class="vstack text-center gap-2 px-3">
+                            <button class="btn btn-primary" type="submit" name="Input.DemoRole" value="@Roles.Admin">
+                                Admin
+                            </button>
+                            <button class="btn btn-primary" type="submit" name="Input.DemoRole" value="@Roles.ProjectManager">
+                                Project Manager
+                            </button>
+                            <button class="btn btn-primary" type="submit" name="Input.DemoRole" value="@Roles.Developer">
+                                Developer
+                            </button>
+                            <button class="btn btn-primary" type="submit" name="Input.DemoRole" value="@Roles.Submitter">
+                                Submitter
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
     </div>
-    <div class="col-md-6 col-md-offset-2">
-        <section>
-            <h3>Use another service to log in.</h3>
-            <hr />
-            <ExternalLoginPicker />
-        </section>
-    </div>
+</div>
+    
+        
+       
+
 </div>
 
 @code {
@@ -124,5 +148,32 @@
 
         [Display(Name = "Remember me?")]
         public bool RememberMe { get; set; }
+
+        public Roles? DemoRole { get; set; }
+    }
+
+    public async Task LoginDemoUser()
+    {
+        if (Input.DemoRole is not null)
+        {
+            string email = Input.DemoRole switch
+
+            {
+                Roles.Admin => "demoadmin@bugtracker.com",
+                Roles.ProjectManager => "demopm@bugtracker.com",
+                Roles.Developer => "demodev@bugtracker.com",
+                Roles.Submitter => "demosub@bugtracker.com",
+                _=> ""
+            };
+
+            ApplicationUser? user = await UserManager.FindByEmailAsync(email);
+            if (user is not null)
+            {
+                await SignInManager.SignInAsync(user, false);
+                RedirectManager.RedirectTo(ReturnUrl);
+            }
+        }
+        errorMessage = "Error: Invalid login attempt.";
+
     }
 }

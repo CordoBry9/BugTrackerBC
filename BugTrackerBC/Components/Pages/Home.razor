@@ -1,8 +1,10 @@
 ﻿@page "/"
 @using BugTrackerBC.Client.Models
 @using BugTrackerBC.Client.Services.Interfaces
+@using BugTrackerBC.Components.Layout
 @inject IProjectDTOService ProjectService
 @inject NavigationManager Navigation
+@layout LandingLayout
 
 <PageTitle>Home</PageTitle>
 
@@ -10,7 +12,7 @@
 <section class="position-relative pt-5 overflow-hidden bg-secondary" style="margin-top: -3rem; padding-top: 3rem; z-index: -1;">
     <span class="position-absolute top-0 start-0 w-100 h-100 bg-secondary d-dark-mode-none"></span>
     <span class="position-absolute top-0 start-0 w-100 h-100 d-dark-mode-block d-none" style="background: radial-gradient(84.79% 172.9% at 73.31% 31.4%, rgba(99, 135, 241, .1) 0%, rgba(218, 70, 239, .05) 52.47%, rgba(99, 135, 241, .1) 100%);">
-        <img class="d-block w-100 h-100 bg-position-center bg-size-cover bg-repeat-0" src="/img/landingpageimage.png" style="object-fit: cover;" />
+  
     </span>
     <div class="container position-relative mt-5 pt-xl-5 pt-md-3 zindex-5">
         <div class="row justify-content-md-start justify-content-center flex-md-nowrap pt-lg-5 pt-4">
@@ -43,7 +45,7 @@
             </div>
             <div class="col-md-12 offset-xl-1 d-flex mt-lg-4 mb-4">
                 <div class="align-self-end ms-xl-0 ms-md-4 p-lg-4 p-sm-3 p-2 rounded-4 overflow-hidden" style="background: linear-gradient(153.32deg, rgba(255, 255, 255, .3) -65.62%, rgba(255, 255, 255, .1) 83.28%); box-shadow: 0 .25rem 1.5rem -.0625rem rgba(0, 0, 0, .2); backdrop-filter: blur(25px);">
-                    <img src="/img/landingpageimage.png" width="1122" alt="BugShot Landing Image" class="rounded-4" style="box-shadow: 0 0 7.5rem rgba(0, 0, 0, .1);">
+                    <img src="/img/landingpageimagenew.png" width="1122" alt="BugShot Landing Image" class="rounded-4" style="box-shadow: 0 0 7.5rem rgba(0, 0, 0, .1);">
                 </div>
             </div>
         </div>

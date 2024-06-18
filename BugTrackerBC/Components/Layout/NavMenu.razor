@@ -16,34 +16,41 @@
             </div>
             <div class="offcanvas-body">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item">
-                        <NavLink href="/" class="nav-link active" Match="NavLinkMatch.All">Home</NavLink>
+                    <li class="nav-item mt-2">
+                        <NavLink href="/" class="nav-link" Match="NavLinkMatch.All">Home</NavLink>
                     </li>
+                    <AuthorizeView>
+                        <Authorized>
+                            <li class="nav-item mt-2">
+                                <NavLink href="/company" class="nav-link" Match="NavLinkMatch.Prefix">Company</NavLink>
+                            </li>
 
-                    <li class="nav-item">
-                        <NavLink href="/company" class="nav-link" Match="NavLinkMatch.Prefix">Company</NavLink>
-                    </li>
-                    <li class="nav-item">
+                        </Authorized>
+                        <NotAuthorized>
+
+                        </NotAuthorized>
+                    </AuthorizeView>
+                    <li class="nav-item mt-2">
                         <AuthorizeView>
                             <Authorized>
 
-                            @if (context.User.IsInRole(nameof(Roles.Admin)))
-                            {
-                                <NavLink href="/all-projects" class="nav-link" Match="NavLinkMatch.Prefix">Projects</NavLink>
-                            }
+                                @if (context.User.IsInRole(nameof(Roles.Admin)))
+                                {
+                                    <NavLink href="/all-projects" class="nav-link" Match="NavLinkMatch.Prefix">Projects</NavLink>
+                                }
                                 @if (context.User.IsInRole(nameof(Roles.Submitter)) || context.User.IsInRole(nameof(Roles.ProjectManager)) || context.User.IsInRole(nameof(Roles.Developer)))
-                            {
-                                <NavLink href="/my-projects" class="nav-link" Match="NavLinkMatch.Prefix">Projects</NavLink>
-                            }
+                                {
+                                    <NavLink href="/my-projects" class="nav-link" Match="NavLinkMatch.Prefix">Projects</NavLink>
+                                }
                             </Authorized>
                             <NotAuthorized>
-                                <NavLink href="/my-projects" class="nav-link" Match="NavLinkMatch.Prefix">Projects</NavLink>
+
                             </NotAuthorized>
                         </AuthorizeView>
 
                     </li>
 
-                    <li class="nav-item">
+                    <li class="nav-item mt-2">
                         <AuthorizeView>
                             <Authorized>
 
@@ -57,33 +64,17 @@
                                 }
                             </Authorized>
                             <NotAuthorized>
-                                <NavLink href="/tickets" class="nav-link" Match="NavLinkMatch.Prefix">Tickets</NavLink>
+
                             </NotAuthorized>
                         </AuthorizeView>
                     </li>
 
-                    <li class="nav-item dropdown">
-                        <a href="#" class="dropdown-toggle nav-link" data-bs-toggle="dropdown" aria-current="page">Account</a>
+                    <li class="nav-item dropdown text-end ms-auto">
                         <AuthorizeView>
-                            <Authorized>
-                                <ul class="dropdown-menu">
-                                    <li class="dropdown-item">
-                                        <NavLink class="nav-link" href="Account/Manage">
-                                            @context.User.Identity?.Name
-                                        </NavLink>
-                                    </li>
-                                    <li class=" dropdown-item">
-                                        <form action="Account/Logout" method="post">
-                                            <AntiforgeryToken />
-                                            <input type="hidden" name="ReturnUrl" value="Account/Login" />
-                                            <button type="submit" class="nav-link">
-                                                Logout
-                                            </button>
-                                        </form>
-                                    </li>
-                                </ul>
-                            </Authorized>
                             <NotAuthorized>
+                                <a href="#" class="dropdown-toggle nav-link mt-2" data-bs-toggle="dropdown" aria-current="page">
+                                    Login/Register
+                                </a>
                                 <ul class="dropdown-menu">
                                     <li class="dropdown-item">
                                         <NavLink class="nav-link" href="Account/Login">
@@ -97,6 +88,33 @@
                                     </li>
                                 </ul>
                             </NotAuthorized>
+                            <Authorized>
+                                <a href="#" class="dropdown-toggle nav-link" data-bs-toggle="dropdown" aria-current="page">
+                                    @if (companyMembers != null)
+                                    {
+                                        @foreach (UserDTO userimg in companyMembers.Where(m => m.Id == userInfo.UserId))
+                                        {
+                                            <img src="@userimg.ImageUrl" class="rounded-circle p-0 m-0" width="40" alt="user-image" />
+                                        }
+                                    }
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li class="dropdown-item">
+                                        <NavLink class="nav-link" href="Account/Manage">
+                                            @context.User.Identity?.Name
+                                        </NavLink>
+                                    </li>
+                                    <li class="dropdown-item">
+                                        <form action="Account/Logout" method="post">
+                                            <AntiforgeryToken />
+                                            <input type="hidden" name="ReturnUrl" value="Account/Login" />
+                                            <button type="submit" class="nav-link">
+                                                Logout
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </Authorized>
                         </AuthorizeView>
                     </li>
                 </ul>
@@ -119,6 +137,8 @@
     private IEnumerable<ProjectDTO> projects = [];
     private ProjectDTO? project;
     private UserInfo? userInfo;
+    private IEnumerable<UserDTO>? companyMembers;
+    private UserDTO? companyMember;
 
     protected override async Task OnInitializedAsync()
     {
@@ -127,7 +147,9 @@
         if (userInfo != null)
         {
             projects = await ProjectDTOService.GetAllProjectsAsync(userInfo.CompanyId);
+            companyMembers = await CompanyDTOService.GetCompanyMembersAsync(userInfo.CompanyId);
         }
+
 
     }
 
