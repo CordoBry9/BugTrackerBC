@@ -137,5 +137,12 @@ namespace BugTrackerBC.Client.Services
 
             return attachment;
         }
+
+        public async Task<IEnumerable<TicketDTO>> GetMemberArchivedTicketsAsync(int companyId, string userId)
+        {
+            IEnumerable<TicketDTO> memberArchivedTickets = (await _httpClient.GetFromJsonAsync<IEnumerable<TicketDTO>>($"api/tickets/member/{userId}/tickets/archived"))!;
+
+            return memberArchivedTickets;
+        }
     }
 }

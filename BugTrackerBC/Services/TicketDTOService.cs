@@ -174,5 +174,10 @@ namespace BugTrackerBC.Services
             await _repository.DeleteTicketAttachment(attachmentId, companyId);
         }
 
+        public async Task<IEnumerable<TicketDTO>> GetMemberArchivedTicketsAsync(int companyId, string userId)
+        {
+            IEnumerable<Ticket> memberArchivedTickets = await _repository.GetMemberArchivedTicketsAsync(companyId, userId);
+            return memberArchivedTickets.Select(t => t.ToDTO()).ToList();
+        }
     }
 }

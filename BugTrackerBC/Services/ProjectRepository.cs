@@ -45,24 +45,6 @@ namespace BugTrackerBC.Services
 
         }
 
-        public async Task ArchiveProjectAsync(int projectId, int companyId)
-        {
-            using ApplicationDbContext context = contextFactory.CreateDbContext();
-
-            Project? project = await context.Projects.Include(t => t.Tickets)
-                                       .FirstOrDefaultAsync(p => p.Id == projectId && p.CompanyId == companyId);
-
-            if (project != null)
-            {
-                project.Archived = true;
-                context.Projects.Update(project);
-                await context.SaveChangesAsync();
-            }
-            else
-            {
-                Console.WriteLine("Failed to archive, project may be null");
-            }
-        }
 
         public async Task<IEnumerable<Project>> GetAllProjectsAsync(int companyId)
         {
@@ -91,6 +73,29 @@ namespace BugTrackerBC.Services
                                 .FirstOrDefaultAsync(p => p.Id == projectId && p.CompanyId == companyId);
         }
 
+        public async Task ArchiveProjectAsync(int projectId, int companyId)
+        {
+            using ApplicationDbContext context = contextFactory.CreateDbContext();
+
+            Project? project = await context.Projects.Include(t => t.Tickets)
+                                       .FirstOrDefaultAsync(p => p.Id == projectId && p.CompanyId == companyId);
+
+            if (project != null)
+            {
+                project.Archived = true;
+                project.Tickets.Where(p => p.ProjectId == projectId);
+                foreach(Ticket t in project.Tickets)
+                {
+                    t.Archived = true;
+                }
+                context.Projects.Update(project);
+                await context.SaveChangesAsync();
+            }
+            else
+            {
+                Console.WriteLine("Failed to archive, project may be null");
+            }
+        }
 
         public async Task RestoreProjectAsync(int projectId, int companyId)
         {
@@ -104,6 +109,11 @@ namespace BugTrackerBC.Services
                 try
                 {
                     project.Archived = false;
+                    project.Tickets.Where(p => p.ProjectId == projectId);
+                    foreach (Ticket t in project.Tickets)
+                    {
+                        t.Archived = false;
+                    }
                     context.Projects.Update(project);
                     await context.SaveChangesAsync();
                 }

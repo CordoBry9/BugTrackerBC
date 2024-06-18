@@ -302,5 +302,73 @@ namespace BugTrackerBC.Services
             return tickets;
         }
 
+        public async Task<IEnumerable<Ticket>> GetMemberArchivedTicketsAsync(int companyId, string userId)
+        {
+            using ApplicationDbContext context = contextFactory.CreateDbContext();
+
+            using IServiceScope scope = svcProvider.CreateScope();
+            UserManager<ApplicationUser> userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+            IEnumerable<Ticket> tickets = [];
+
+            ApplicationUser? user = await userManager.FindByIdAsync(userId);
+            if (user == null) return tickets;
+
+            bool isPM = user is not null && await userManager.IsInRoleAsync(user, nameof(Roles.ProjectManager));
+
+            if (isPM)
+            {
+                tickets = await context.Tickets
+                        .Where(t => t.Project!.CompanyId == companyId && t.Archived == true && t.Project.Members.Any(m => m.Id == userId) || t.SubmitterUserId == userId)
+                        .Include(t => t.Project)
+                        .Include(t => t.Comments)
+                        .Include(t => t.SubmitterUser)
+                        .Include(t => t.DeveloperUser)
+                        .OrderByDescending(t => t.Created)
+                        .ToListAsync();
+
+                return tickets;
+            }
+
+            bool isDev = user is not null && await userManager.IsInRoleAsync(user, nameof(Roles.Developer));
+
+            if (isDev)
+            {
+
+                tickets = await context.Tickets
+                       .Where(t => t.Project!.CompanyId == companyId && t.Archived == true && t.SubmitterUserId == userId || t.DeveloperUserId == userId)
+                       .Include(t => t.Project)
+                       .Include(t => t.Comments)
+                       .Include(t => t.SubmitterUser)
+                       .Include(t => t.DeveloperUser)
+                       .OrderByDescending(t => t.Created)
+                       .ToListAsync();
+
+                return tickets;
+
+            }
+
+
+            bool isSubmitter = user is not null && await userManager.IsInRoleAsync(user, nameof(Roles.Submitter));
+
+            if (isSubmitter)
+            {
+
+                tickets = await context.Tickets
+                       .Where(t => t.Project!.CompanyId == companyId && t.Archived == true && t.SubmitterUserId == userId)
+                       .Include(t => t.Project)
+                       .Include(t => t.Comments)
+                       .Include(t => t.SubmitterUser)
+                       .Include(t => t.DeveloperUser)
+                       .OrderByDescending(t => t.Created)
+                       .ToListAsync();
+
+                return tickets;
+
+            }
+
+            return tickets;
+        }
+
     }
 }

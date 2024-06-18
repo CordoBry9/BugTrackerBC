@@ -153,6 +153,25 @@ namespace BugTrackerBC.Controllers
             }
         }
 
+        [HttpGet("member/{userId}/tickets/archived")]
+        public async Task<ActionResult<IEnumerable<TicketDTO>>> GetMemberArchivedTickets([FromRoute] string userId)
+        {
+            try
+            {
+                if (_companyId != null)
+                {
+                    IEnumerable<TicketDTO> tickets = await _ticketService.GetMemberArchivedTicketsAsync(_companyId.Value, userId);
+                    return Ok(tickets);
+                }
+                return BadRequest();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return Problem();
+            }
+        }
+
         [HttpGet("{ticketId:int}")]
         public async Task<ActionResult<TicketDTO?>> GetTicketById([FromRoute] int ticketId)
         {

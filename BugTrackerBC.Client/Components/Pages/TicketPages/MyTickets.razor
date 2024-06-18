@@ -165,6 +165,7 @@
         projects = (await ProjectDTOService.GetMemberProjectsAsync(userInfo!.CompanyId, userInfo.UserId)).ToList();
         archivedProjects = (await ProjectDTOService.GetMemberArchivedProjectsAsync(userInfo!.CompanyId, userInfo.UserId)).ToList();
         tickets = (await TicketDTOService.GetMemberTicketsAsync(userInfo!.CompanyId, userInfo!.UserId)).ToList();
+        archivedTickets = (await TicketDTOService.GetMemberArchivedTicketsAsync(userInfo!.CompanyId, userInfo!.UserId)).ToList();
     }
 
     private async Task HandleSubmit()
