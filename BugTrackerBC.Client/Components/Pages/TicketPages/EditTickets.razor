@@ -98,11 +98,11 @@ else
                     if (userInfo.Roles.Contains(nameof(Roles.Admin)))
                     {
 
-                        Navigation.NavigateTo("/tickets");
+                        Navigation.NavigateTo($"details-ticket/{ticket.Id}");
                     }
                     else
                     {
-                        Navigation.NavigateTo("/my-tickets");
+                        Navigation.NavigateTo($"details-ticket/{ticket.Id}");
                     }
                 }
                 

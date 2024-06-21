@@ -18,11 +18,11 @@ else
     {
         <AuthorizeView>
             <Authorized>
-                <div class="row align-items-between mb-4">
+                <div class="row align-items-center mb-4">
                     <div class="col">
                         <h1 class="mb-0">Projects</h1>
                     </div>
-                    <div class="col">
+                    <div class="col-auto">
                         @if (context.User.IsInRole(nameof(Roles.Admin)) || context.User.IsInRole(nameof(Roles.ProjectManager)))
                         {
                             <button class="btn btn-primary me-2" type="button" data-bs-toggle="collapse" data-bs-target="#projectForm" aria-expanded="false" aria-controls="projectForm">

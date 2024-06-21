@@ -3,11 +3,11 @@
         <h5>Manage Project</h5>
     </div>
     <div class="card-body">
-        <div class="row">
-            <div class="col-lg-6">
+        <div class="row flex-column d-flex align-items-center">
+            <div class="col-lg-6 mb-4 text-center">
                 <AuthorizeView Roles="Admin" Context="adminContext">
                     <label for="manager" class="form-label">Company Managers:</label>
-                    <InputSelect id="manager" @bind-Value="assignedManagerId" class="form-control">
+                    <InputSelect id="manager" @bind-Value="assignedManagerId" class="form-control text-center">
                         <option value="">Select a Manager</option>
                         @if (projectManagers != null)
                         {
@@ -20,17 +20,21 @@
                             }
                         }
                     </InputSelect>
-                    <button type="button" class="btn btn-primary mt-2" @onclick="AssignManager">Assign Manager</button>
-                    <button type="button" class="btn btn-danger mt-2" @onclick="RemoveManager">Remove Manager</button>
+                    <button type="button" class="btn btn-outline-info mt-2" @onclick="AssignManager">
+                        <i class="bx bx-plus"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-danger mt-2" @onclick="RemoveManager">
+                        <i class="bx bx-minus"></i>
+                    </button>
                 </AuthorizeView>
             </div>
             <AuthorizeView Roles="Admin, ProjectManager" Context="memberContext">
-                <div class="@(memberContext.User.IsInRole(nameof(Roles.ProjectManager)) ? "col-12" : "col-lg-6")">
+                <div class="text-center col-12 col-lg-6">
                     @if (memberContext.User.IsInRole(nameof(Roles.Admin)) ||
                     (projectManager != null && projectManager.Id == userInfo?.UserId))
                     {
                         <label for="members" class="form-label">Company Members:</label>
-                        <InputSelect id="members" @bind-Value="assignedMemberId" class="form-control">
+                        <InputSelect id="members" @bind-Value="assignedMemberId" class="form-control text-center">
                             <option value="">Select a Member</option>
                             @if (companyMembers != null)
                             {
@@ -43,8 +47,14 @@
                                 }
                             }
                         </InputSelect>
-                        <button type="button" class="btn btn-secondary mt-2" @onclick="AssignMember">Add Member</button>
-                        <button type="button" class="btn btn-danger mt-2" @onclick="RemoveMember">Remove Member</button>
+                        <div class="d-flex justify-content-center">
+                            <button type="button" class="btn btn-outline-info mt-2 mx-1" @onclick="AssignMember">
+                                <i class="bx bx-plus"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-danger mt-2 mx-1" @onclick="RemoveMember">
+                                <i class="bx bx-minus"></i>
+                            </button>
+                        </div>
                     }
                     else
                     {
@@ -56,9 +66,13 @@
     </div>
 </div>
 
+
 @code {
     [Parameter, EditorRequired]
     public IEnumerable<UserDTO>? projectManagers { get; set; }
+
+    [Parameter]
+    public ProjectDTO? project { get; set; }
 
     [Parameter, EditorRequired]
     public EventCallback<string?> assignedManager { get; set; }

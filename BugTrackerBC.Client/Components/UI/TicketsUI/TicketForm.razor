@@ -50,11 +50,21 @@
                 <label for="project" class="form-label">Project</label>
                 <InputSelect id="project" class="form-control" @bind-Value="newTicket.ProjectId">
                     <option value="#">Select a project</option>
-                    @if (projects != null)
+                    @if (projects != null && allprojects != null)
                     {
-                        @foreach (ProjectDTO project in projects)
+                        @if (createTicket.User.IsInRole(nameof(Roles.Admin)))
                         {
-                            <option value="@project.Id">@project.Name</option>
+                            @foreach (ProjectDTO project in allprojects)
+                            {
+                                <option value="@project.Id">@project.Name</option>
+                            }
+                        }
+                        else
+                        {
+                            @foreach (ProjectDTO project in projects)
+                            {
+                                <option value="@project.Id">@project.Name</option>
+                            }
                         }
                     }
 
@@ -73,6 +83,9 @@
     [Parameter, EditorRequired]
 
     public TicketDTO? newTicket { get; set; }
+
+    [Parameter]
+    public List<ProjectDTO>? allprojects { get; set; }
 
     [Parameter]
     public List<ProjectDTO>? projects { get; set; }

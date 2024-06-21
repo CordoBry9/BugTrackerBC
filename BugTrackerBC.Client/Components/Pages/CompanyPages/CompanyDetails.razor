@@ -16,179 +16,139 @@
  @*
      TODO:
  Add error for authorizations
+ add loading spinners
  *@
- 
-@if (userInfo != null && company != null)
-{
 
-    <AuthorizeView Context="authContext">
-        <Authorized>
-            <div class="row d-flex py-3">
-                <div class="col-md-6 mt-2 d-flex">
-                    <div class="card mb-4 flex-grow-1">
-                        <div class="row">
-                            <div class="col">
-                                <img src="@company.ImageUrl" class="img-fluid rounded-top" alt="company logo">
-                            </div>
-                            <div class="col card-body d-flex">
-                                <div class="vstack p-1">
-                                    <h5 class="card-title">@company.Name</h5>
-                                    <p class="card-text">@company.Description</p>
-                                    @if (authContext.User.IsInRole(nameof(Roles.Admin)))
+<div class="container-fluid bg-gradient">
+    @if (userInfo != null && company != null)
+    {
+
+
+        <AuthorizeView Context="authContext">
+            <Authorized>
+                <!-- Portfolio list view -->
+                <div class="row">
+                    <div class="col-md-6 pb-1 mb-3 pb-md-0 mb-md-0">
+                        <a href="#">
+                            <img src="@company.ImageUrl" class="rounded-3" width="600" alt="Company Logo">
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="ps-md-4 ms-md-2 p-3">
+                            <h2 class="h3">@company.Name</h2>
+                            <a class="d-table badge bg-faded-primary text-primary fs-sm mb-3">Technology Company</a>
+                            <p class="d-md-none d-lg-block pb-3 mb-2 mb-md-2">
+                                @company.Description
+                               
+                            </p>
+                            @if (authContext.User.IsInRole(nameof(Roles.Admin)))
+                            {
+                                <a class="btn btn-outline-primary" href="company-edit/@company.Id"><i class="bx bx-pencil"></i></a>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row d-flex py-3">
+                    <div class="col-md-6 mt-2 d-flex">
+                        <!-- Other content can go here or additional company details -->
+                    </div>
+                    <div class="col-md-6 p-2 mb-3 d-flex">
+                        <!-- Leave this column for future expansion or content -->
+                    </div>
+                </div>
+
+                <div class="container-xxl">
+                    <!-- List of members -->
+                    <div class="lead mb-3 text-center"><u>Members:</u></div>
+                    <!-- You -->
+                    <div class="d-flex justify-content-center mb-3">
+                        <div class="col col-md-4 col-sm-6">
+                            <div class="card border border-1 card-hover card-body text-center h-100">
+                                <img src="@userInfo.ProfilePictureUrl" class="d-block rounded-circle mx-auto mb-3" width="162" alt="employee image">
+                                <h5 class="fw-medium fs-lg mb-1">@userInfo.FullName</h5>
+                                <p class="fs-sm mb-3">
+                                    @if (currentUser != null)
                                     {
-                                        <hr />
-                                        <a class="btn btn-primary" href="company-edit/@company.Id">Edit Company</a>
+                                        @foreach (Roles role in Enum.GetValues(typeof(Roles)))
+                                        {
+                                            if (currentUser.Role == role.ToString())
+                                            {
+                                            <p class="text-center">@role.GetDisplayName()</p>
+                                            }
+                                        }
                                     }
-                                    
-                                </div>
+                                </p>
                             </div>
                         </div>
                     </div>
-
-                </div>
-                <div class="col-md-6 p-2 mb-3 d-flex">
-                    @if (selectedMember != null)
-                    {
-
-                        <div class="card flex-grow-1 w-100">
-                            @if (authContext.User.IsInRole(nameof(Roles.Admin)) && authContext.User.IsInRole(nameof(Roles.ProjectManager)))
-                            {
-                                <h5 class="card-header fs-3 text-center"><b>Edit Member</b></h5>
-
-                            }
-                            else
-                            {
-                                <h5 class="card-header fs-3 text-center"><b>Member Details</b></h5>
-                            }
-                            <div class="card-body">
-                                <EditForm Model="selectedMember" OnValidSubmit="HandleUpdate">
-                                    <DataAnnotationsValidator />
-                                    <ValidationSummary />
-                                    <div class="mb-3 text-center">
-                                        <label for="fullName" class="form-label">Name:</label>
-                                        <p id="fullName">@selectedMember.FullName</p>
-                                    </div>
-                                    <div class="mb-3 text-center">
-                                        <label for="role" class="form-label">Role:</label>
-                                        @if (authContext.User.IsInRole(nameof(Roles.Admin)) || authContext.User.IsInRole(nameof(Roles.ProjectManager)))
-                                        {
-                                        <InputSelect id="role" class="form-control" @bind-Value="selectedMember.Role">
-                                            @foreach (Roles role in Enum.GetValues(typeof(Roles)))
-                                            {
-                                                @if (role != Roles.DemoUser)
-                                                {
-                                                    <option value="@role">@role.GetDisplayName()</option>
-                                                    //figure out why not showing display name
-                                                }
-                                            }
-                                            </InputSelect>
-                                        }
-                                        else
-                                        {
-                                            @foreach(Roles role in Enum.GetValues(typeof(Roles)))
-                                            {
-                                                if (selectedMember.Role == role.ToString())
-                                                {
-                                                
-                                                    <p>@role.GetDisplayName()</p>
-                                                }
-                                            }
-                                        }
-                                    </div>
-                                    <div class="col-12 text-center px-5">
-@*                                         @if (userInfo.UserId == selectedMember.Id)
-                                        {
-                                        <img src="@(string.IsNullOrEmpty(selectedMember.ImageUrl) ? FileHelper.DefaultProfilePicture : selectedMember.ImageUrl)" class="img-fluid previewUpload" />
-                                        <InputFile OnChange="OnFileChange" class="form-control mt-2" accept=".png, .jpg, .jpeg, .svg" />
-
-                                        <div>
-                                            <span class="text-danger">
-                                                @imageError
-                                            </span>
-                                            </div>
-                                        }
-                                        else
-                                        { *@
-                                        <label for="avatar" class="form-label">Avatar:</label>
-                                        <br />
-                                         <img id="avatar" src="@selectedMember.ImageUrl" class="previewUpload img-thumbnail"/>
-                                       @*  } *@
-                                    </div>
-                                    <div class="text-center">
-                                        @if (authContext.User.IsInRole(nameof(Roles.Admin)) || authContext.User.IsInRole(nameof(Roles.ProjectManager)))
-                                        {
-                                            <button type="submit" class="btn btn-primary mt-3">Update Role</button>
-                                        }
-                                        
-                                    </div>
-
-                                </EditForm>
-                            </div>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="card flex-grow-1 w-100">
-                            <h5 class="card-header fs-2"><b>Edit Member</b></h5>    
-                            <div class="card-body">
-                                <div class="mb-3">
-                                    <div class="fs-3">Select an Employee</div>
-                                </div>
-
-                            </div>
-                        </div>
-                    }
-                </div>
-            </div>
-            <div class="row"> @* list of members *@
-                <div class="col-12">
-                    <ul class="list-group mb-5 py-3">
-                        <div class="fs-4 mb-3"><u>Employees</u></div>
+                    <!-- others-->
+                    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
                         @if (companymembers != null)
                         {
                             @foreach (UserDTO member in companymembers)
                             {
                                 @if (member.Id != userInfo!.UserId)
                                 {
-                                    <li class="list-group-item list-group-item-action" @onclick="() => SelectMember(member)">
-                                        <div class="row py-2 d-flex align-items-center">
-                                            <div class="col-md-3 col-lg-2 d-flex justify-content-center">
-                                                <img src="@member.ImageUrl" class="me-3 img-thumbnail rounded-circle employee-img" />
-                                            </div>
-                                            <div class="col-md-9 col-lg-10 text-center text-md-start mt-sm-2">
-                                                <p>@member.FullName</p>
-                                                <hr class="py-2" />
-                                                @foreach(Roles role in Enum.GetValues(typeof(Roles)))
-                                                {
-                                                    
-                                                    if(member.Role == role.ToString())
+                                    <div class="col">
+                                        <div class="card card-body card-hover border border-1 text-center h-100">
+                                            <img src="@member.ImageUrl" class="d-block rounded-circle mx-auto mb-3" width="162" alt="employee image">
+                                            <h5 class="fw-medium fs-lg mb-1">@member.FullName</h5>
+                                            <p class="fs-sm mb-3">
+                                                <EditForm Model="member" OnValidSubmit="HandleUpdate">
+                                                    <DataAnnotationsValidator />
+                                                    <ValidationSummary />
+                                                    @if (authContext.User.IsInRole(nameof(Roles.Admin)))
                                                     {
-                                                        <p> @role.GetDisplayName()</p>
+                                                        <InputSelect id="role" class="form-control text-center" @bind-Value="member.Role">
+                                                            @foreach (Roles role in Enum.GetValues(typeof(Roles)))
+                                                            {
+                                                                @if (role != Roles.DemoUser)
+                                                                {
+                                                                    <option value="@role">@role.GetDisplayName()</option>
+                                                                }
+                                                            }
+                                                        </InputSelect>
                                                     }
-
-                                                }
-                                            </div>
+                                                    else
+                                                    {
+                                                        @foreach (Roles role in Enum.GetValues(typeof(Roles)))
+                                                        {
+                                                            if (member.Role == role.ToString())
+                                                            {
+                                                                <p class="text-center">@role.GetDisplayName()</p>
+                                                            }
+                                                        }
+                                                    }
+                                                    <div class="text-center">
+                                                        @if (authContext.User.IsInRole(nameof(Roles.Admin)))
+                                                        {
+                                                            <button type="submit" class="btn btn-primary mt-3">Update Role</button>
+                                                        }
+                                                    </div>
+                                                </EditForm>
+                                            </p>
                                         </div>
-                                    </li>
+                                    </div>
                                 }
                             }
                         }
-                    </ul>
+                    </div>
                 </div>
-            </div>
 
-        </Authorized>
-        <NotAuthorized>
-            <Message DisplayMessage="@authErrorMsg" Title="@authErrorTitle"></Message>
-        </NotAuthorized>
-    </AuthorizeView>
-@*     Fix this later to just have certain columns show when not an admin (like the turnary statement you made earlier) *@
-}   
-else
-{
-    <h1>Please Sign in</h1>
-}
 
+            </Authorized>
+            <NotAuthorized>
+                <Message DisplayMessage="@authErrorMsg" Title="@authErrorTitle"></Message>
+            </NotAuthorized>
+        </AuthorizeView>
+        @*     Fix this later to just have certain columns show when not an admin (like the turnary statement you made earlier) *@
+    }
+    else
+    {
+        <h3> Loading...</h3>
+    }
+</div>
 @code {
 
     [CascadingParameter]
@@ -202,6 +162,7 @@ else
     public string authErrorMsg = "User not authorized to access this page";
     public string authErrorTitle = "Authorization Error";
     public string authErrorCSS = "alert-primary";
+    private UserDTO? currentUser;
 
 
     protected override async Task OnInitializedAsync()
@@ -211,6 +172,7 @@ else
         {
             company = await CompanyDTOService.GetCompanyByIdAsync(userInfo.CompanyId);
             companymembers = await CompanyDTOService.GetCompanyMembersAsync(userInfo.CompanyId);
+            currentUser = companymembers.FirstOrDefault(m => m.Id == userInfo.UserId);
         }
         else
         {

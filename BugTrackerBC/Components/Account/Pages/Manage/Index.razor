@@ -17,7 +17,7 @@
 
 <PageTitle>Profile</PageTitle>
 
-<h3>Profile</h3>
+<h3 class="mt-2">Profile</h3>
 <StatusMessage />
 
 <div class="row">
@@ -41,14 +41,14 @@
             </div>
 
                 <div class="col-md-6 order-first order-md-last">
-                    <img src="@(user?.ImageId.HasValue == true ? $"/api/uploads/{user.ImageId}" : FileHelper.DefaultProfilePicture)" class="img-fluid p-5 pt-0 rounded-3" id="imagePreview" />
+                    <img src="@(user?.ImageId.HasValue == true ? $"/api/uploads/{user.ImageId}" : FileHelper.DefaultProfilePicture)" class="img-fluid p-5 pt-0 pb-0 rounded-3" id="imagePreview" />
 
                     <label class="form-label" for="image">Profile Picture</label>
                     <input type="file" class="form-control" accept=".jpg,.jpeg,.png,.svg,.gif" name="Input.ProfilePicture"
                            onchange="document.getElementById('imagePreview').src = window.URL.createObjectURL(this.files[0])" />
                 </div>
  
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Save</button>
+            <button type="submit" class="w-100 btn btn-lg btn-primary mt-3">Save</button>
         </EditForm>
     </div>
 </div>

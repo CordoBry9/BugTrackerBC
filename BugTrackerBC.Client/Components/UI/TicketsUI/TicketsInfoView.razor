@@ -1,0 +1,35 @@
+﻿@using BugTrackerBC.Client.Models
+
+<div class="card card-body border shadow-sm mt-3">
+    <h3 class="h5">Sort by Assignment</h3>
+    <ul class="nav flex-column fs-sm">
+        <li class="nav-item mb-1">
+            <a class="nav-link py-1 px-0 @(selectedAssignment == null ? "active" : "")" @onclick="() => SelectAssignment(null)">
+                All Tickets
+            </a>
+        </li>
+        <li class="nav-item mb-1">
+            <a class="nav-link py-1 px-0 @(selectedAssignment == true ? "active" : "")" @onclick="() => SelectAssignment(true)">
+                Assigned Tickets
+            </a>
+        </li>
+        <li class="nav-item mb-1">
+            <a class="nav-link py-1 px-0 @(selectedAssignment == false ? "active" : "")" @onclick="() => SelectAssignment(false)">
+                Unassigned Tickets
+            </a>
+        </li>
+    </ul>
+</div>
+
+@code {
+    [Parameter]
+    public EventCallback<bool?> OnAssignmentSelected { get; set; }
+
+    private bool? selectedAssignment = null;
+
+    private void SelectAssignment(bool? isAssigned)
+    {
+        selectedAssignment = isAssigned;
+        OnAssignmentSelected.InvokeAsync(isAssigned);
+    }
+}

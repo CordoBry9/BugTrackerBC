@@ -12,126 +12,158 @@
 @if (project != null)
 {
     <div class="container mt-4">
-        <div class="row g-4 border p-3">
-            <AuthorizeView>
-                <div class="@(context.User.IsInRole(nameof(Roles.Developer)) || context.User.IsInRole(nameof(Roles.Submitter)) ? "col-12" : "col-md-6")">
-                    <div class="card h-100">
-                        <div class="card-header">
-                            <h4>@project.Name</h4>
-                        </div>
-                        <div class="card-body p-3">
-                            <p class="card-text"><strong>Assigned:</strong> @project.StartDate.ToString("d")</p>
-                            <p class="card-text"><strong>Deadline:</strong> @project.EndDate.ToString("d")</p>
-                            <p class="card-text"><strong>Priority:</strong> @project.Priority</p>
-                            <p class="card-text"><strong>Archived:</strong> @project.Archived</p> @* find way to show as yes or no *@
-                            <p class="card-text">
-                                <strong>Project Manager:&nbsp;</strong>
+        <div class="card p-3">
+            <div class="row g-4 p-2">
+                <AuthorizeView>
+                    <div class="@(context.User.IsInRole(nameof(Roles.Developer)) || context.User.IsInRole(nameof(Roles.Submitter)) ? "col-12" : "col-md-6")">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h4>@project.Name</h4>
+                            </div>
+                            <div class="card-body p-3">
+                                <p class="card-text"><strong>Assigned:</strong> @project.StartDate.ToString("d")</p>
+                                <p class="card-text"><strong>Deadline:</strong> @project.EndDate.ToString("d")</p>
+                                <p class="card-text"><strong>Priority:</strong> @project.Priority</p>
+                                <p class="card-text"><strong>Status:</strong> @(project.Archived == true ? "Archived" : "Active")</p>
 
-                                @if (projectManager is null)
-                                {
-                                    @nullManager
-                                }
-                                else
-                                {
-                                    @projectManager.FullName
-                                }
-                            </p>
-                            <p class="card-text"><strong>Description:</strong> @project.Description</p>
-                            <hr />
-                            <div class="row d-flex">
-                                <div class="col d-flex">
-                                    <a href="@((userInfo.Roles.Contains(nameof(Roles.Admin))) ? "/all-projects" : "/my-projects")"
-                                       class="btn btn-outline-primary mt-3">
-                                        <i class='bx bx-arrow-from-right'></i>
-                                    </a>
-                                    <div class="flex-grow-1 d-flex justify-content-end">
-                                        @if (project.Archived == false)
+                                <p class="card-text">
+                                    <div class="d-flex align-items-center">
+                                        <strong class="me-2">Project Manager:</strong>
+@*                                         @if (context.User.IsInRole(nameof(Roles.Admin)))
                                         {
-                                            <button class="btn btn-outline-danger mt-3 me-2" @onclick="HandleArchive">
-                                                <i class='bx bx-archive'></i>
-                                            </button>
+                                            <EditForm Model="projectManager" Context="authcontext" OnValidSubmit="HandleManagerUpdate">
+                                                <DataAnnotationsValidator />
+                                                <ValidationSummary />
+                                                <div class="d-flex">
+                                                    <InputSelect id="manager" class="form-control me-2" @bind-Value="projectManager.Id">
+                                                        @foreach (UserDTO manager in projectManagers)
+                                                        {
+                                                            <option value="@manager.Id">@manager.FullName</option>
+                                                        }
+                                                    </InputSelect>
+                                                    <button type="submit" class="btn btn-outline-success"><i class="bx bx-check"></i></button>
+                                                </div>
+                                            </EditForm>
+                                        }
+                                        else
+                                        { *@
 
-                                            @if (userInfo != null && (context.User.IsInRole(nameof(Roles.Admin)) ||
-                                           (projectManager != null && context.User.IsInRole(nameof(Roles.ProjectManager)) && projectManager.Id == userInfo.UserId)))
+                                            @if (projectManager != null)
                                             {
-                                                <a class="btn btn-outline-info mt-3" href="/edit-project/@project.Id">
-                                                    <i class='bx bxs-edit'></i>
-                                                </a>
+                                                <p class="m-0">@projectManager.FullName</p>
                                             }
-                                        }
-                                        @if (project.Archived == true)
-                                        {
-                                            <button class="btn btn-outline-success mt-3 me-2" @onclick="HandleRestore">
-                                                <i class='bx bx-check'></i>
-                                            </button>
-                                            @if (userInfo != null && (context.User.IsInRole(nameof(Roles.Admin)) ||
-                                           (projectManager != null && context.User.IsInRole(nameof(Roles.ProjectManager)) && projectManager.Id == userInfo.UserId)))
+                                            else
                                             {
-                                                <a class="btn btn-outline-info mt-3" href="/edit-project/@project.Id">
-                                                    <i class='bx bxs-edit'></i>
-                                                </a>
+                                                <p class="m-0">No Manager Assigned</p>
                                             }
-                                        }
+@*                                         } *@
+                                    </div>
+                                </p>
+
+                                <p class="card-text"><strong>Description:</strong> @project.Description</p>
+                                <hr />
+                                <div class="row d-flex">
+                                    <div class="col d-flex">
+                                        <a href="@((userInfo.Roles.Contains(nameof(Roles.Admin))) ? "/all-projects" : "/my-projects")"
+                                           class="btn btn-outline-primary mt-3">
+                                            <i class='bx bx-arrow-from-right'></i>
+                                        </a>
+                                        <div class="flex-grow-1 d-flex justify-content-end">
+                                            @if (project.Archived == false)
+                                            {
+                                                <button class="btn btn-outline-danger mt-3 me-2" @onclick="HandleArchive">
+                                                    <i class='bx bx-archive'></i>
+                                                </button>
+
+                                                @if (userInfo != null && (context.User.IsInRole(nameof(Roles.Admin)) ||
+                                               (projectManager != null && context.User.IsInRole(nameof(Roles.ProjectManager)) && projectManager.Id == userInfo.UserId)))
+                                                {
+                                                    <a class="btn btn-outline-info mt-3" href="/edit-project/@project.Id">
+                                                        <i class='bx bxs-edit'></i>
+                                                    </a>
+                                                }
+                                            }
+                                            @if (project.Archived == true)
+                                            {
+                                                <button class="btn btn-outline-success mt-3 me-2" @onclick="HandleRestore">
+                                                    <i class='bx bx-check'></i>
+                                                </button>
+                                                @if (userInfo != null && (context.User.IsInRole(nameof(Roles.Admin)) ||
+                                               (projectManager != null && context.User.IsInRole(nameof(Roles.ProjectManager)) && projectManager.Id == userInfo.UserId)))
+                                                {
+                                                    <a class="btn btn-outline-info mt-3" href="/edit-project/@project.Id">
+                                                        <i class='bx bxs-edit'></i>
+                                                    </a>
+                                                }
+                                            }
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </AuthorizeView>
-            <div class="col-md-6">
-                <AuthorizeView Roles="Admin, ProjectManager">
-                    <AssignProjectManagers projectManagers="projectManagers" userInfo="userInfo"
-                                           projectManager="projectManager" companyMembers="companyMembers"
-                                           assignedMember="OnMemberAssign"
-                                           removeMember="RemoveMember"
-                                           removeProjectManager="RemoveManager"
-                                           assignedManager="OnManagerAssign" />
                 </AuthorizeView>
-            </div>
 
-            <div class="row mt-3">
-                <div class="col">
-                    <div class="table-responsive">
-                        <h5>Project Members</h5>
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th scope="col">Icon</th>
-                                    <th scope="col">Name</th>
-                                    <th scope="col">Position Name</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (UserDTO member in projectMembers.Where(m => m.Role != nameof(Roles.ProjectManager)))
-                                {
-                                    <tr>
-                                        <th scope="row">
-                                            @if (member.Role == nameof(Roles.Developer))
-                                            {
-                                                <i class="bi bi-person-workspace"></i>
-                                            }
-                                            else if (member.Role == nameof(Roles.Submitter))
-                                            {
-                                                <i class="bi bi-file-earmark-plus"></i>
-                                            }
-                                            else if (member.Role == nameof(Roles.ProjectManager))
-                                            {
-                                                <i class="bi bi-person-gear"></i>
-                                            }
-                                        </th>
-                                        <td>@member.FullName</td>
-                                        <td>@member.Role</td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
+                <!-- Project Members Selection -->
+                <div class="col-md-6">
+                    <AuthorizeView Roles="Admin, ProjectManager">
+                        <AssignProjectManagers projectManagers="projectManagers" userInfo="userInfo"
+                                               projectManager="projectManager" companyMembers="companyMembers"
+                                               assignedMember="OnMemberAssign"
+                                               removeMember="RemoveMember"
+                                               removeProjectManager="RemoveManager"
+                                               assignedManager="OnManagerAssign" 
+                                               project="project"/>
+                    </AuthorizeView>
                 </div>
             </div>
         </div>
 
-        <div class="card mt-4">
+        <!-- Project Members -->
+        <div class="card mt-4 p-3">
+            <div class="card-header">
+                <h4>Project Members</h4>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Icon</th>
+                                <th scope="col">Name</th>
+                                <th scope="col">Position Name</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (UserDTO member in projectMembers.Where(m => m.Role != nameof(Roles.ProjectManager)))
+                            {
+                                <tr>
+                                    <th scope="row">
+                                        @if (member.Role == nameof(Roles.Developer))
+                                        {
+                                            <i class="bi bi-person-workspace"></i>
+                                        }
+                                        else if (member.Role == nameof(Roles.Submitter))
+                                        {
+                                            <i class="bi bi-file-earmark-plus"></i>
+                                        }
+                                        else if (member.Role == nameof(Roles.ProjectManager))
+                                        {
+                                            <i class="bi bi-person-gear"></i>
+                                        }
+                                    </th>
+                                    <td>@member.FullName</td>
+                                    <td>@member.Role</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tickets -->
+        <div class="card mt-4 p-3">
             <div class="card-header">
                 <h4>Tickets</h4>
             </div>
@@ -173,13 +205,10 @@
 
     private ProjectDTO? project;
     private UserInfo? userInfo;
-    private TicketDTO? ticket;
-    private UserDTO? member;
+    private UserDTO? projectManager;
     private IEnumerable<UserDTO> projectManagers = [];
-    private IEnumerable<UserDTO> companyMembers = [];
     private IEnumerable<UserDTO> projectMembers = [];
-    private UserDTO? projectManager = new();
-    private string? nullManager;
+    private IEnumerable<UserDTO> companyMembers = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -188,13 +217,36 @@
         {
             project = await ProjectDTOService.GetProjectByIdAsync(projectId, userInfo.CompanyId);
             projectManagers = await CompanyDTOService.GetUsersInRoleAsync(nameof(Roles.ProjectManager), userInfo.CompanyId);
-            companyMembers = await CompanyDTOService.GetCompanyMembersAsync(userInfo.CompanyId);
             projectManager = await ProjectDTOService.GetProjectManagerAsync(projectId, userInfo.CompanyId);
-            if (projectManager == null)
-            {
-                nullManager = " No manager assigned";
-            }
             projectMembers = await ProjectDTOService.GetProjectMembersAsync(projectId, userInfo.CompanyId);
+            companyMembers = await CompanyDTOService.GetCompanyMembersAsync(userInfo.CompanyId);
+        }
+    }
+
+    private async Task HandleManagerUpdate()
+    {
+        if (userInfo != null && projectManager != null)
+        {
+            await ProjectDTOService.AssignProjectManagerAsync(projectId, projectManager.Id, userInfo.UserId);
+            projectManager = await ProjectDTOService.GetProjectManagerAsync(projectId, userInfo.CompanyId);
+        }
+    }
+
+    private async Task HandleRestore()
+    {
+        if (userInfo != null)
+        {
+            await ProjectDTOService.RestoreProjectAsync(projectId, userInfo.CompanyId);
+            project = await ProjectDTOService.GetProjectByIdAsync(projectId, userInfo.CompanyId);
+        }
+    }
+
+    private async Task HandleArchive()
+    {
+        if (userInfo != null)
+        {
+            await ProjectDTOService.ArchiveProjectAsync(projectId, userInfo.CompanyId);
+            project = await ProjectDTOService.GetProjectByIdAsync(projectId, userInfo.CompanyId);
         }
     }
 
@@ -232,35 +284,6 @@
             await ProjectDTOService.RemoveProjectManagerAsync(projectId, userInfo.UserId);
             projectMembers = await ProjectDTOService.GetProjectMembersAsync(projectId, userInfo.CompanyId);
             projectManager = await ProjectDTOService.GetProjectManagerAsync(projectId, userInfo.CompanyId);
-        }
-    }
-
-    private async Task HandleRestore()
-    {
-        try
-        {
-            if (userInfo is not null)
-            {
-                await ProjectDTOService.RestoreProjectAsync(projectId, userInfo.CompanyId);
-                project = await ProjectDTOService.GetProjectByIdAsync(projectId, userInfo.CompanyId);
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex);
-        }
-    }
-
-    private async Task HandleArchive()
-    {
-        try
-        {
-            await ProjectDTOService.ArchiveProjectAsync(projectId, userInfo!.CompanyId);
-            project = await ProjectDTOService.GetProjectByIdAsync(projectId, userInfo.CompanyId);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex);
         }
     }
 }

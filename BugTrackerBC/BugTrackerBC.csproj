@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Components\Account\Shared\LandingLayout.razor.css" />
     <None Remove="Components\Layout\LandingLayOut.razor.css" />
   </ItemGroup>
 

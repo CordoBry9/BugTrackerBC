@@ -1,0 +1,31 @@
+﻿@using BugTrackerBC.Client.Models
+
+<div class="card card-body border shadow-sm">
+    <h3 class="h5">Ticket Priority</h3>
+    <ul class="nav flex-column fs-sm">
+        <li class="nav-item mb-1">
+            <a class="nav-link py-1 px-0 @(selectedPriority == null ? "active" : "")" @onclick="() => SelectPriority(null)">
+                All tickets
+            </a>
+        </li>
+        @foreach (TicketPriority priority in Enum.GetValues(typeof(TicketPriority)))
+        {
+            <li class="nav-item mb-1">
+                <a class="nav-link py-1 px-0 @(selectedPriority == priority ? "active" : "")" @onclick="() => SelectPriority(priority)">
+                    @priority.GetDisplayName()
+                </a>
+            </li>
+        }
+    </ul>
+</div>
+
+@code {
+    [Parameter] public EventCallback<TicketPriority?> OnPrioritySelected { get; set; }
+    private TicketPriority? selectedPriority = null;
+
+    private void SelectPriority(TicketPriority? priority)
+    {
+        selectedPriority = priority;
+        OnPrioritySelected.InvokeAsync(priority);
+    }
+}

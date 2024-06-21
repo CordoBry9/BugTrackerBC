@@ -533,7 +533,7 @@ namespace BugTrackerBC.Controllers
                         return BadRequest();
                     }
                     string userId = _userManager.GetUserId(User)!;
-                    await _ticketService.UpdateCommentAsync(comment, userId);
+                    await _ticketService.DeleteCommentAsync(commentId, _companyId.Value);
                     return NoContent();
                 }
                 else

@@ -5,10 +5,22 @@
 
 <header class="header navbar navbar-expand-lg bg-light shadow-sm shadow-dark-mode-none fixed-top">
     <div class="container px-3">
+
+        <AuthorizeView>
+            <Authorized>
         <a href="/" class="navbar-brand pe-3">
             <img src="img/Bugshotfinal.svg" width="47" alt="Silicon">
             BugShot
         </a>
+
+            </Authorized>
+            <NotAuthorized>
+                <a href="/" class="navbar-brand pe-3 mt-2">
+                    <img src="img/Bugshotfinal.svg" width="47" alt="Silicon">
+                    BugShot
+                </a>
+            </NotAuthorized>
+        </AuthorizeView>
         <div id="navbarNav" class="offcanvas offcanvas-end">
             <div class="offcanvas-header border-bottom">
                 <h5 class="offcanvas-title">Menu</h5>

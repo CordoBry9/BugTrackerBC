@@ -8,14 +8,14 @@
 {
     <AuthorizeView>
         <tr>
-            <td>@Ticket.Created.ToString("g")</td>
+            <td>@Ticket.Created.ToString("d")</td>
             <td><a href="/details-Ticket/@Ticket.Id" class="text-decoration-none">@Ticket.Title</a></td>
             <td>@Ticket.Priority.GetDisplayName()</td>
             <td>@Ticket.Status.GetDisplayName()</td>
             <td>@Ticket.Type.GetDisplayName()</td>
             <td>
                 <div class="vstack">
-                    @if (context.User.IsInRole(nameof(Roles.Admin)) || (context.User.IsInRole(nameof(Roles.ProjectManager)) && Projects!.Any(p => p.Id == Ticket.ProjectId && p.Members.Any(m => m.Id == userInfo.UserId))))
+                    @if (context.User.IsInRole(nameof(Roles.Admin)) || (context.User.IsInRole(nameof(Roles.ProjectManager)) && Projects!.Any(p => p.Id == Ticket.ProjectId && p.Members.Any(m => m.Id == userInfo.UserId))) || Ticket.SubmitterUserId == userInfo.UserId)
                     {
                         @if (!Ticket.Archived)
                         {

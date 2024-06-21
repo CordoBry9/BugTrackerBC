@@ -246,6 +246,21 @@ namespace BugTrackerBC.Services
             ApplicationUser? user = await userManager.FindByIdAsync(userId);
             if (user == null) return tickets;
 
+            bool isAdmin = user is not null && await userManager.IsInRoleAsync(user, nameof(Roles.Admin));
+            if (isAdmin)
+            {
+                tickets = await context.Tickets
+                        .Where(t => t.Project!.CompanyId == companyId && t.Archived == false && t.Project.Members.Any(m => m.Id == userId) || t.SubmitterUserId == userId)
+                        .Include(t => t.Project)
+                        .Include(t => t.Comments)
+                        .Include(t => t.SubmitterUser)
+                        .Include(t => t.DeveloperUser)
+                        .OrderByDescending(t => t.Created)
+                        .ToListAsync();
+
+                return tickets;
+            }
+
             bool isPM = user is not null && await userManager.IsInRoleAsync(user, nameof(Roles.ProjectManager));
 
             if (isPM)
@@ -268,7 +283,7 @@ namespace BugTrackerBC.Services
             {
 
                 tickets = await context.Tickets
-                       .Where(t => t.Project!.CompanyId == companyId && t.Archived == false && t.SubmitterUserId == userId || t.DeveloperUserId == userId)
+                       .Where(t => t.Project!.CompanyId == companyId && t.Archived == false && t.DeveloperUserId == userId || t.SubmitterUserId == userId)
                        .Include(t => t.Project)
                        .Include(t => t.Comments)
                        .Include(t => t.SubmitterUser)
@@ -313,6 +328,21 @@ namespace BugTrackerBC.Services
 
             ApplicationUser? user = await userManager.FindByIdAsync(userId);
             if (user == null) return tickets;
+
+            bool isAdmin = user is not null && await userManager.IsInRoleAsync(user, nameof(Roles.Admin));
+            if (isAdmin)
+            {
+                tickets = await context.Tickets
+                        .Where(t => t.Project!.CompanyId == companyId && t.Archived == true && t.Project.Members.Any(m => m.Id == userId) || t.SubmitterUserId == userId)
+                        .Include(t => t.Project)
+                        .Include(t => t.Comments)
+                        .Include(t => t.SubmitterUser)
+                        .Include(t => t.DeveloperUser)
+                        .OrderByDescending(t => t.Created)
+                        .ToListAsync();
+
+                return tickets;
+            }
 
             bool isPM = user is not null && await userManager.IsInRoleAsync(user, nameof(Roles.ProjectManager));
 
