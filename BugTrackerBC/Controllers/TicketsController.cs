@@ -31,7 +31,7 @@ namespace BugTrackerBC.Controllers
             _userManager = userManager;
             _projectService = projectDTOService;
         }
-
+            
         [HttpPost]
         [Authorize(Roles = $"{nameof(Roles.Admin)}, {nameof(Roles.ProjectManager)}, {nameof(Roles.Developer)}, {nameof(Roles.Submitter)}")]
         public async Task<ActionResult<TicketDTO>> AddTicket([FromBody] TicketDTO newTicket)
